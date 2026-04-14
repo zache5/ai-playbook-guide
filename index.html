@@ -82,8 +82,22 @@ body {
   max-width: 700px;
   margin: 0 auto;
   padding: 40px 20px;
-  transition: background 0.3s, color 0.3s;
+  transition: background 0.3s, color 0.3s, max-width 0.3s, margin 0.3s;
 }
+
+/* Reading progress bar (Stripe-inspired) */
+.reading-progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 0%;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--purple));
+  z-index: 9999;
+  transition: width 0.1s linear;
+  pointer-events: none;
+}
+@media print { .reading-progress-bar { display: none !important; } }
 
 /* Print styles */
 @media print {
@@ -1003,7 +1017,7 @@ body { padding-top: 60px; }
 .sidebar-actions button:hover { background: var(--bg-code); }
 
 #sidebar-chapters { list-style: none; padding: 0; margin: 0; }
-#sidebar-chapters li {
+#sidebar-chapters li, #sidebar-chapters div li {
   padding: 6px 20px;
   display: flex;
   align-items: flex-start;
@@ -1011,8 +1025,10 @@ body { padding-top: 60px; }
   cursor: pointer;
   transition: background 0.15s;
 }
-#sidebar-chapters li:hover { background: var(--bg-code); }
-#sidebar-chapters li.active-chapter { background: var(--accent-bg); }
+#sidebar-chapters div { list-style: none; padding: 0; margin: 0; }
+#sidebar-chapters div li { padding-left: 28px; }
+#sidebar-chapters li:hover, #sidebar-chapters div li:hover { background: var(--bg-code); }
+#sidebar-chapters li.active-chapter, #sidebar-chapters div li.active-chapter { background: var(--accent-bg); }
 #sidebar-chapters li input[type="checkbox"] {
   margin-top: 3px;
   flex-shrink: 0;
@@ -1094,8 +1110,365 @@ html.dark-mode .ch-badge.optional { background: #334155; color: #94a3b8; }
 /* Body shift when sidebar open on desktop */
 @media (min-width: 900px) {
   body.sidebar-open { margin-left: 320px; max-width: 700px; }
+  body.sidebar-open.rpanel-open { max-width: 600px; margin-right: 370px; }
+  body.rpanel-open:not(.sidebar-open) { max-width: 950px; margin-right: 370px; }
   #sidebar-overlay { display: none !important; }
   #guide-sidebar.open { transform: translateX(0); }
+}
+@media (min-width: 1200px) {
+  body.sidebar-open.rpanel-open { max-width: 600px; }
+}
+
+/* ===== RIGHT PANEL ===== */
+#right-panel {
+  position: fixed;
+  top: 48px;
+  right: 0;
+  width: 360px;
+  height: calc(100vh - 48px);
+  background: var(--bg);
+  border-left: 1px solid var(--border);
+  z-index: 5000;
+  transform: translateX(100%);
+  transition: transform 0.3s ease, background 0.3s;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+#right-panel.open { transform: translateX(0); }
+
+.rp-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-alt);
+  flex-shrink: 0;
+}
+.rp-tabs button {
+  flex: 1;
+  padding: 10px 4px;
+  font-size: 0.75em;
+  font-family: inherit;
+  font-weight: 600;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 0.2s, border-color 0.2s;
+  white-space: nowrap;
+}
+.rp-tabs button.active { color: var(--accent); border-bottom-color: var(--accent); background: var(--bg); }
+.rp-tabs button:hover { color: var(--text); }
+
+.rp-tab-content {
+  display: none;
+  flex: 1;
+  overflow-y: auto;
+  flex-direction: column;
+}
+.rp-tab-content.active { display: flex; }
+
+/* Notes tab */
+.rp-notes-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 14px;
+}
+.rp-notes-area textarea {
+  flex: 1;
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  font-family: inherit;
+  font-size: 0.9em;
+  line-height: 1.6;
+  resize: none;
+  background: var(--bg);
+  color: var(--text);
+  outline: none;
+  min-height: 200px;
+}
+.rp-notes-area textarea:focus { border-color: var(--accent); }
+.rp-notes-area textarea::placeholder { color: var(--text-muted); }
+.rp-notes-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-shrink: 0;
+}
+.rp-notes-actions button {
+  padding: 6px 14px;
+  font-size: 0.82em;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 600;
+}
+.rp-notes-actions button:hover { border-color: var(--accent); color: var(--accent); }
+.rp-notes-saved {
+  font-size: 0.78em;
+  color: var(--green);
+  margin-left: auto;
+  align-self: center;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.rp-notes-saved.visible { opacity: 1; }
+
+/* AI tab in right panel */
+.rp-ai-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+.rp-ai-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px;
+  font-size: 0.9em;
+  line-height: 1.6;
+}
+.rp-ai-input-area {
+  padding: 10px 14px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.rp-ai-input-area input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.9em;
+  outline: none;
+  background: var(--bg);
+  color: var(--text);
+}
+.rp-ai-input-area input:focus { border-color: var(--accent); }
+.rp-ai-input-area button {
+  padding: 8px 14px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 0.9em;
+}
+
+/* Prompt packager */
+.prompt-package-box {
+  background: var(--bg-prompt);
+  color: #e2e8f0;
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-top: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.82em;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  position: relative;
+}
+.prompt-package-box .pp-copy-btn {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 4px 12px;
+  font-size: 0.85em;
+  border-radius: 4px;
+  border: 1px solid #475569;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+}
+.prompt-package-box .pp-copy-btn:hover { color: #e2e8f0; border-color: #94a3b8; }
+
+/* Bookmarks tab in right panel */
+.rp-bookmarks {
+  padding: 14px;
+  font-size: 0.9em;
+}
+.rp-bookmarks-section {
+  margin-bottom: 20px;
+}
+.rp-bookmarks-section h4 {
+  font-size: 0.82em;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin: 0 0 8px;
+  font-weight: 700;
+}
+.rp-bm-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+.rp-bm-item a {
+  color: var(--text);
+  text-decoration: none;
+  font-size: 0.92em;
+  flex: 1;
+}
+.rp-bm-item a:hover { color: var(--accent); }
+.rp-bm-remove {
+  font-size: 0.8em;
+  color: var(--red);
+  cursor: pointer;
+  padding: 2px 6px;
+  border: none;
+  background: none;
+  font-family: inherit;
+}
+.rp-bm-empty { color: var(--text-muted); font-size: 0.88em; padding: 16px 0; }
+.rp-highlight-item {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.88em;
+}
+.rp-highlight-text {
+  background: rgba(255, 235, 59, 0.2);
+  padding: 2px 4px;
+  border-radius: 2px;
+  color: var(--text);
+}
+.rp-highlight-note {
+  font-size: 0.85em;
+  color: var(--text-muted);
+  margin-top: 2px;
+  font-style: italic;
+}
+
+/* Quick Ref tab */
+.rp-quickref {
+  padding: 14px;
+}
+.rp-qr-search {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.9em;
+  background: var(--bg);
+  color: var(--text);
+  outline: none;
+  margin-bottom: 12px;
+}
+.rp-qr-search:focus { border-color: var(--accent); }
+.rp-qr-section {
+  margin-bottom: 16px;
+}
+.rp-qr-section h4 {
+  font-size: 0.82em;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--accent);
+  margin: 0 0 8px;
+  font-weight: 700;
+}
+.rp-qr-card {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  background: var(--bg);
+  transition: border-color 0.2s;
+}
+.rp-qr-card:hover { border-color: var(--accent); }
+.rp-qr-card-name {
+  font-weight: 700;
+  font-size: 0.9em;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+.rp-qr-card-phrase {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.82em;
+  background: var(--bg-code);
+  padding: 6px 10px;
+  border-radius: 4px;
+  margin: 6px 0;
+  color: var(--text-code);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.rp-qr-card-phrase .rp-qr-copy {
+  font-size: 0.85em;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  flex-shrink: 0;
+}
+.rp-qr-card-phrase .rp-qr-copy:hover { color: var(--accent); border-color: var(--accent); }
+.rp-qr-card-desc {
+  font-size: 0.82em;
+  color: var(--text-secondary);
+}
+.rp-glossary-item {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+.rp-glossary-term {
+  font-weight: 700;
+  font-size: 0.88em;
+  color: var(--accent);
+}
+.rp-glossary-def {
+  font-size: 0.82em;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+/* Right panel toggle button in nav */
+#rpanel-toggle {
+  position: relative;
+}
+
+/* Hide floating AI button on desktop when right panel is open */
+@media (min-width: 1024px) {
+  body.rpanel-open #ai-fab { display: none; }
+  body.rpanel-open #ai-panel { display: none !important; }
+}
+
+/* Mobile: right panel as overlay */
+@media (max-width: 1023px) {
+  #right-panel { width: 320px; z-index: 8000; box-shadow: -4px 0 20px var(--shadow-strong); }
+  body.rpanel-open { margin-right: 0 !important; max-width: none !important; }
+}
+@media (max-width: 899px) {
+  body.rpanel-open { margin-right: 0 !important; }
+}
+
+/* Right panel overlay for mobile */
+#rpanel-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.3);
+  z-index: 7999;
+}
+#rpanel-overlay.visible { display: block; }
+@media (min-width: 1024px) {
+  #rpanel-overlay { display: none !important; }
 }
 
 /* Onboarding wizard overlay */
@@ -1502,10 +1875,12 @@ html.dark-mode .ch-badge.optional { background: #334155; color: #94a3b8; }
 @media print {
   #reading-progress, #guide-sidebar, #sidebar-toggle, #sidebar-overlay,
   #onboarding-overlay, #search-overlay, #ai-fab, #ai-panel, #toast-container,
-  #top-nav, #user-dashboard, #shortcuts-modal,
+  #top-nav, #user-dashboard, #shortcuts-modal, #back-to-top-btn,
+  #right-panel, #rpanel-overlay,
   .persona-callout, .sidebar-actions, .ch-badge, .share-link, .note-btn,
   .copy-btn, .user-note { display: none !important; }
   body.sidebar-open { margin-left: 0 !important; }
+  body.rpanel-open { margin-right: 0 !important; }
   body { padding-top: 0 !important; }
 }
 
@@ -1517,17 +1892,359 @@ html.dark-mode .ch-badge.optional { background: #334155; color: #94a3b8; }
   .before-after { grid-template-columns: 1fr; }
   #ai-panel { width: calc(100vw - 32px); right: 16px; bottom: 88px; max-height: 60vh; }
 }
+
+/* ===== BACK TO TOP BUTTON ===== */
+#back-to-top-btn {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  z-index: 6000;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  width: 44px;
+  height: 44px;
+  font-family: inherit;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  border-radius: 50%;
+  box-shadow: 0 3px 10px var(--shadow);
+  transition: background 0.2s, opacity 0.3s, transform 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(10px);
+}
+#back-to-top-btn.visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
+#back-to-top-btn:hover { background: var(--accent-dark); transform: translateY(-2px); }
+
+/* ===== BOOKMARK ICON ON CHAPTER HEADINGS ===== */
+.bookmark-btn {
+  display: inline-block;
+  font-size: 0.55em;
+  color: var(--text-muted);
+  cursor: pointer;
+  margin-left: 8px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  vertical-align: middle;
+  font-weight: 500;
+  background: var(--bg);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+h2:hover .bookmark-btn { opacity: 1; }
+.bookmark-btn.bookmarked { opacity: 1; color: var(--yellow-dark); border-color: var(--yellow); background: var(--yellow-bg); }
+
+/* ===== SIDEBAR TABS ===== */
+.sidebar-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  margin: 0 0 8px;
+  padding: 0 12px;
+}
+.sidebar-tabs button {
+  flex: 1;
+  padding: 8px 4px;
+  font-size: 0.78em;
+  font-family: inherit;
+  font-weight: 600;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 0.2s, border-color 0.2s;
+}
+.sidebar-tabs button.active { color: var(--accent); border-bottom-color: var(--accent); }
+.sidebar-tabs button:hover { color: var(--text); }
+
+.sidebar-tab-content { display: none; }
+.sidebar-tab-content.active { display: block; }
+
+#sidebar-bookmarks-list, #sidebar-notes-bookmarks-list {
+  padding: 8px 20px;
+  font-size: 0.85em;
+}
+#sidebar-bookmarks-list .sb-item, #sidebar-notes-bookmarks-list .snb-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+#sidebar-bookmarks-list .sb-item a, #sidebar-notes-bookmarks-list .snb-item a {
+  color: var(--text);
+  text-decoration: none;
+  font-size: 0.92em;
+  flex: 1;
+}
+#sidebar-bookmarks-list .sb-item a:hover, #sidebar-notes-bookmarks-list .snb-item a:hover { color: var(--accent); }
+.sb-remove, .snb-remove {
+  font-size: 0.8em;
+  color: var(--red);
+  cursor: pointer;
+  padding: 2px 6px;
+  border: none;
+  background: none;
+  font-family: inherit;
+}
+.sb-empty, .snb-empty { color: var(--text-muted); font-size: 0.85em; padding: 16px 20px; }
+
+/* ===== TEXT HIGHLIGHT AND MARGIN NOTES ===== */
+.highlight-tooltip {
+  position: absolute;
+  background: var(--accent);
+  color: #fff;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  z-index: 7000;
+  box-shadow: 0 2px 8px var(--shadow);
+  user-select: none;
+}
+.text-highlight {
+  background: rgba(255, 235, 59, 0.35);
+  border-bottom: 2px solid var(--yellow);
+  cursor: pointer;
+  position: relative;
+}
+html.dark-mode .text-highlight { background: rgba(255, 235, 59, 0.15); }
+.margin-note-indicator {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: var(--yellow);
+  border-radius: 50%;
+  margin-left: 4px;
+  vertical-align: super;
+  cursor: pointer;
+}
+.margin-note-popup {
+  position: absolute;
+  right: -20px;
+  top: 0;
+  width: 220px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.85em;
+  box-shadow: 0 4px 12px var(--shadow);
+  z-index: 6500;
+  color: var(--text);
+}
+.margin-note-popup textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 6px;
+  font-family: inherit;
+  font-size: inherit;
+  resize: vertical;
+  min-height: 50px;
+  background: var(--bg);
+  color: var(--text);
+}
+.margin-note-popup .mn-actions { display: flex; gap: 6px; margin-top: 6px; }
+.margin-note-popup .mn-actions button {
+  font-size: 0.85em;
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-family: inherit;
+}
+.margin-note-popup .mn-actions button:hover { background: var(--bg-code); }
+
+/* ===== CAREER INPUT (Ch24) ===== */
+.career-input-section {
+  background: var(--accent-bg);
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  padding: 24px;
+  margin: 24px 0;
+}
+.career-input-section h3 { margin-top: 0; }
+.career-input-section input[type="text"] {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 1em;
+  background: var(--bg);
+  color: var(--text);
+  margin-bottom: 10px;
+}
+.career-input-section button {
+  padding: 8px 20px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.95em;
+  font-weight: 600;
+  cursor: pointer;
+}
+.career-input-section button:hover { background: var(--accent-dark); }
+.career-result {
+  margin-top: 20px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+}
+.career-result h4 { color: var(--accent); margin-top: 16px; }
+.career-result h4:first-child { margin-top: 0; }
+
+/* ===== STILL CONFUSED SECTIONS ===== */
+.still-confused {
+  margin: 20px 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.still-confused summary {
+  padding: 12px 16px;
+  background: var(--bg-alt);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.95em;
+  color: var(--text-secondary);
+  list-style: none;
+}
+.still-confused summary::-webkit-details-marker { display: none; }
+.still-confused summary::before { content: '+ '; font-weight: 700; color: var(--accent); }
+.still-confused[open] summary::before { content: '- '; }
+.still-confused .sc-prompts {
+  padding: 12px 16px;
+}
+.still-confused .sc-prompt {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.still-confused .sc-prompt:last-child { border-bottom: none; }
+.still-confused .sc-prompt-text {
+  flex: 1;
+  font-size: 0.92em;
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85em;
+}
+.still-confused .sc-copy-btn {
+  font-size: 0.78em;
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+}
+.still-confused .sc-copy-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+/* ===== POWER TRICKS LIBRARY ===== */
+.power-tricks-library {
+  margin: 24px 0;
+}
+.power-tricks-library .ptl-search {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.95em;
+  background: var(--bg);
+  color: var(--text);
+  margin-bottom: 16px;
+}
+.ptl-card {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+  background: var(--bg);
+  transition: border-color 0.2s;
+}
+.ptl-card:hover { border-color: var(--accent); }
+.ptl-card-name {
+  font-weight: 700;
+  font-size: 1em;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.ptl-card-phrase {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.88em;
+  background: var(--bg-code);
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin: 8px 0;
+  color: var(--text-code);
+  position: relative;
+}
+.ptl-card-phrase .ptl-copy {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.8em;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+}
+.ptl-card-phrase .ptl-copy:hover { color: var(--accent); border-color: var(--accent); }
+.ptl-card-desc {
+  font-size: 0.9em;
+  color: var(--text-secondary);
+}
+
+/* ===== PERSONALIZED GET AHEAD CHAPTER ===== */
+#get-ahead-personalized {
+  background: linear-gradient(135deg, var(--accent-bg), var(--purple-bg));
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  padding: 24px;
+  margin: 24px 0;
+}
+#get-ahead-personalized h4 { color: var(--accent); }
 </style>
 </head>
 <body>
 
+<!-- READING PROGRESS BAR -->
+<div class="reading-progress-bar no-print" id="reading-progress-bar"></div>
+
+<!-- BACK TO TOP BUTTON -->
+<button id="back-to-top-btn" class="no-print" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top" title="Back to top">&#8593;</button>
+
 <!-- TOP NAV BAR -->
 <div id="top-nav" class="no-print">
+  <a onclick="window.scrollTo({top:0,behavior:'smooth'})" style="cursor:pointer;font-weight:700;font-size:0.88em;color:var(--text);text-decoration:none;white-space:nowrap;margin-left:48px;">The AI Playbook</a>
   <div class="nav-spacer"></div>
   <button class="font-btn" id="font-decrease" title="Decrease font size">A-</button>
   <button class="font-btn" id="font-increase" title="Increase font size">A+</button>
   <button id="dark-mode-toggle" title="Toggle dark mode">Dark</button>
   <button id="nav-search-btn" title="Search (Cmd+K)">Search</button>
+  <button id="rpanel-toggle" title="Toggle workspace panel (])">Panel</button>
   <button id="nav-shortcuts-btn" title="Keyboard shortcuts (?)">?</button>
 </div>
 
@@ -1560,7 +2277,20 @@ html.dark-mode .ch-badge.optional { background: #334155; color: #94a3b8; }
     <button id="btn-recustomize">Recustomize</button>
     <button id="btn-search-sidebar">Search</button>
   </div>
-  <ul id="sidebar-chapters"></ul>
+  <div class="sidebar-tabs">
+    <button class="active" data-tab="chapters">Chapters</button>
+    <button data-tab="bookmarks">Bookmarks</button>
+    <button data-tab="notes-bookmarks">Notes & Bookmarks</button>
+  </div>
+  <div id="sidebar-tab-chapters" class="sidebar-tab-content active">
+    <ul id="sidebar-chapters"></ul>
+  </div>
+  <div id="sidebar-tab-bookmarks" class="sidebar-tab-content">
+    <div id="sidebar-bookmarks-list"><div class="sb-empty">No bookmarks yet. Click the flag icon on any chapter heading to bookmark it.</div></div>
+  </div>
+  <div id="sidebar-tab-notes-bookmarks" class="sidebar-tab-content">
+    <div id="sidebar-notes-bookmarks-list"><div class="snb-empty">No notes or bookmarks yet.</div></div>
+  </div>
 </nav>
 
 <!-- AI ASSISTANT FAB -->
@@ -1578,6 +2308,51 @@ html.dark-mode .ch-badge.optional { background: #334155; color: #94a3b8; }
   <div class="ai-input-area">
     <input type="text" id="ai-input" placeholder="Ask a question..." autocomplete="off">
     <button id="ai-send">Ask</button>
+  </div>
+</div>
+
+<!-- RIGHT PANEL OVERLAY (mobile) -->
+<div id="rpanel-overlay" class="no-print"></div>
+
+<!-- RIGHT WORKSPACE PANEL -->
+<div id="right-panel" class="no-print">
+  <div class="rp-tabs">
+    <button class="active" data-rptab="notes">Notes</button>
+    <button data-rptab="ai">AI Assistant</button>
+    <button data-rptab="bookmarks">Bookmarks</button>
+    <button data-rptab="quickref">Quick Ref</button>
+  </div>
+  <div id="rp-tab-notes" class="rp-tab-content active">
+    <div class="rp-notes-area">
+      <textarea id="rp-notes-textarea" placeholder="Take notes as you read the guide. Your notes save automatically to your browser."></textarea>
+      <div class="rp-notes-actions">
+        <button id="rp-notes-clear">Clear</button>
+        <button id="rp-notes-export">Export</button>
+        <span class="rp-notes-saved" id="rp-notes-saved">Saved</span>
+      </div>
+    </div>
+  </div>
+  <div id="rp-tab-ai" class="rp-tab-content">
+    <div class="rp-ai-container">
+      <div class="rp-ai-messages" id="rp-ai-messages">
+        <div class="ai-msg bot">Ask me anything about AI, Claude, or this guide. I have answers to 300+ common questions. Try: "Is Claude free?", "Can Claude write code?", or "How can a teacher use Claude?"<br><br><em>Tip: If you type a rough idea, I can package it into a well-structured prompt you can copy into Claude.</em></div>
+      </div>
+      <div class="rp-ai-input-area">
+        <input type="text" id="rp-ai-input" placeholder="Ask a question or describe a task..." autocomplete="off">
+        <button id="rp-ai-send">Ask</button>
+      </div>
+    </div>
+  </div>
+  <div id="rp-tab-bookmarks" class="rp-tab-content">
+    <div class="rp-bookmarks" id="rp-bookmarks-content">
+      <div class="rp-bm-empty">No bookmarks or highlights yet. Bookmark chapters or highlight text as you read.</div>
+    </div>
+  </div>
+  <div id="rp-tab-quickref" class="rp-tab-content">
+    <div class="rp-quickref">
+      <input type="text" class="rp-qr-search" id="rp-qr-search" placeholder="Search power tricks, prompts, glossary...">
+      <div id="rp-qr-content"></div>
+    </div>
   </div>
 </div>
 
@@ -1602,6 +2377,7 @@ html.dark-mode .ch-badge.optional { background: #334155; color: #94a3b8; }
       <tr><td><kbd>?</kbd></td><td>Show this panel</td></tr>
       <tr><td><kbd>Esc</kbd></td><td>Close any open panel</td></tr>
       <tr><td><kbd>[</kbd></td><td>Toggle sidebar</td></tr>
+      <tr><td><kbd>]</kbd></td><td>Toggle right panel</td></tr>
       <tr><td><kbd>+</kbd></td><td>Increase font size</td></tr>
       <tr><td><kbd>-</kbd></td><td>Decrease font size</td></tr>
     </table>
@@ -1647,7 +2423,7 @@ This guide is for educational purposes only. Results vary based on individual ef
 <li><a href="#ch1">Chapter 1: How AI Got Here</a> <span class="reading-time">15 min</span></li>
 <li><a href="#ch2">Chapter 2: What Claude Actually Is (And Is Not)</a> <span class="reading-time">10 min</span></li>
 <li><a href="#ch3">Chapter 3: Make Claude Yours (Personalization)</a> <span class="reading-time">12 min</span></li>
-<li><a href="#ch4">Chapter 4: You Are Not Cheating</a> <span class="reading-time">6 min</span></li>
+<li><a href="#ch4">Chapter 4: When to Implement AI</a> <span class="reading-time">6 min</span></li>
 <li><a href="#ch5">Chapter 5: AI Literacy Fundamentals</a> <span class="reading-time">14 min</span></li>
 <li><a href="#ch6">Chapter 6: Coming from ChatGPT</a> <span class="reading-time">8 min</span></li>
 <li><a href="#ch7">Chapter 7: Power Tricks That Change Everything</a> <span class="reading-time">15 min</span></li>
@@ -1688,6 +2464,7 @@ This guide is for educational purposes only. Results vary based on individual ef
 <ul>
 <li><a href="#roi-section">Interactive ROI Calculator</a> <span class="reading-time">3 min</span></li>
 <li><a href="#prompt-builder-section">Interactive Prompt Builder</a> <span class="reading-time">3 min</span></li>
+<li><a href="#quick-reference">Quick Reference Card</a> <span class="reading-time">2 min</span></li>
 </ul>
 
 <div class="toc-part">Appendices</div>
@@ -1696,6 +2473,7 @@ This guide is for educational purposes only. Results vary based on individual ef
 <li><a href="#appendix-b">Appendix B: Prompt Template Library</a></li>
 <li><a href="#appendix-c">Appendix C: Command Reference Card</a></li>
 <li><a href="#appendix-d">Appendix D: Plan Comparison Cheat Sheet</a></li>
+<li><a href="#power-tricks-library">Power Tricks Library</a></li>
 <li><a href="#glossary">Glossary: AI Terms in Plain English</a></li>
 </ul>
 </div>
@@ -1825,6 +2603,13 @@ AI did not appear out of nowhere. It is the result of 70 years of research that 
 <div class="outcome-title">What You Now Have</div>
 A clear mental timeline of how AI evolved from simple rules to the tools you are using today. You know what AI can and cannot do right now. You know who the major players are and what makes each one different. You understand why these tools are powerful, why they have limitations, and why learning them now puts you ahead of most people. This is your foundation for everything that follows.
 </div>
+
+<details class="still-confused"><summary>Still confused? Ask Claude these prompts for more help:</summary><div class="sc-prompts">
+<div class="sc-prompt"><div class="sc-prompt-text">Explain the difference between machine learning and deep learning like I am 10 years old</div><button class="sc-copy-btn" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent);this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',2000)">Copy</button></div>
+<div class="sc-prompt"><div class="sc-prompt-text">Give me 5 real-world examples of AI I already use every day without realizing it</div><button class="sc-copy-btn" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent);this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',2000)">Copy</button></div>
+<div class="sc-prompt"><div class="sc-prompt-text">What is the difference between Claude, ChatGPT, and Gemini in simple terms? When would I pick one over the other?</div><button class="sc-copy-btn" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent);this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',2000)">Copy</button></div>
+<div class="sc-prompt"><div class="sc-prompt-text">Why do people say AI is going to change everything? Give me concrete examples, not hype.</div><button class="sc-copy-btn" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent);this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',2000)">Copy</button></div>
+</div></details>
 
 <hr class="chapter-sep">
 <div class="page-break"></div>
@@ -2026,6 +2811,17 @@ My brand voice: genuine, a bit understated, confident without being braggy. I ne
 
 I shoot on Sony, edit in Lightroom, and my website is on Squarespace. I can follow tech instructions but do not assume I know what terminal or command line means.</div>
 
+<h4>A restaurant owner</h4>
+<div class="prompt-box"><div class="prompt-label">Personalization prompt</div>About me:
+
+I am Rosa. I own a family Italian restaurant in suburban Chicago. Been open 8 years. 14 employees. We do about $1.2M in revenue and seat 80.
+
+I need Claude for: writing seasonal menu descriptions that do not sound generic, responding to Google and Yelp reviews without sounding defensive, creating training guides for new servers, analyzing our POS data to figure out which dishes to keep and which to cut, writing Instagram captions, and handling the endless email back-and-forth with suppliers.
+
+My restaurant's voice: warm, family-oriented, proud of our recipes, never pretentious. We are not fine dining. We are the place where families celebrate birthdays and couples come on Tuesdays because they crave the lasagna.
+
+I am comfortable with a computer but I do not code. If you say "terminal" I will think you mean the airport.</div>
+
 <h4>A teacher building lesson plans</h4>
 <div class="prompt-box"><div class="prompt-label">Personalization prompt</div>About me:
 
@@ -2093,7 +2889,7 @@ A personalized Claude profile that makes every future conversation better. You d
 <div class="page-break"></div>
 
 <!-- CHAPTER 4: YOU ARE NOT CHEATING -->
-<h2 id="ch4">Chapter 4: You Are Not Cheating</h2>
+<h2 id="ch4">Chapter 4: When to Implement AI</h2>
 
 <p>Before we go any further, we need to talk about something most guides ignore. If you have ever felt a twinge of guilt about using AI, this chapter is for you. You are not alone. Research shows 36% of Gen Z workers feel guilty about using AI, concerned about authenticity and effort.</p>
 
@@ -2274,6 +3070,13 @@ Regardless of privacy settings, never paste passwords, Social Security numbers, 
 A working understanding of how AI actually works: tokens, context windows, hallucination, and privacy. You can now have an informed conversation about AI with anyone and know what to watch out for.
 </div>
 
+<details class="still-confused"><summary>Still confused? Ask Claude these prompts for more help:</summary><div class="sc-prompts">
+<div class="sc-prompt"><div class="sc-prompt-text">Explain tokens and context windows to me like I am 10 years old</div><button class="sc-copy-btn" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent);this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',2000)">Copy</button></div>
+<div class="sc-prompt"><div class="sc-prompt-text">Give me 5 examples of how context window size affects my conversations with AI</div><button class="sc-copy-btn" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent);this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',2000)">Copy</button></div>
+<div class="sc-prompt"><div class="sc-prompt-text">What happens when I hit the context limit and how do I avoid it?</div><button class="sc-copy-btn" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent);this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',2000)">Copy</button></div>
+<div class="sc-prompt"><div class="sc-prompt-text">What is a hallucination in AI? Give me 3 examples of when Claude might hallucinate and how I would catch it.</div><button class="sc-copy-btn" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent);this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',2000)">Copy</button></div>
+</div></details>
+
 
 <!-- CHAPTER 6: COMING FROM CHATGPT -->
 <h2 id="ch6">Chapter 6: Coming from ChatGPT</h2>
@@ -2332,6 +3135,11 @@ You do not have to choose one over the other. Many people use both. ChatGPT is b
 <div class="chapter-outcome">
 <div class="outcome-title">What You Now Have</div>
 A clear map of what translates from ChatGPT and what does not. You can now use Claude on its own terms instead of fighting against it with old habits.
+</div>
+
+<div class="callout callout-note" style="margin-top:32px;background:linear-gradient(135deg, var(--accent-bg), var(--purple-bg));border-left:4px solid var(--purple);">
+<div class="callout-title" style="color:var(--purple-dark);">Good stopping point</div>
+If you need to take a break, this is a natural one. You now understand AI, know what Claude is, have it personalized, know when to use it, understand the fundamentals, and know how it compares to ChatGPT. That is a solid foundation. Bookmark this spot and come back when you are ready for the power techniques that make everything better. Also: you do not need to read all 26 chapters. The sidebar marks which ones are essential for your situation. Focus on those and come back for the rest when the time is right.
 </div>
 
 <hr class="chapter-sep">
@@ -2423,6 +3231,13 @@ Pick the three tricks from this chapter that feel most relevant to your life rig
 <div class="outcome-title">What You Now Have</div>
 Ten power techniques that make every interaction with Claude dramatically better. These are the difference between getting generic AI output and getting genuinely useful, personalized results.
 </div>
+
+<details class="still-confused"><summary>Still confused? Ask Claude these prompts for more help:</summary><div class="sc-prompts">
+<div class="sc-prompt"><div class="sc-prompt-text">Show me 3 real examples of "think step by step" vs a normal prompt and how the output differs</div><button class="sc-copy-btn" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent);this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',2000)">Copy</button></div>
+<div class="sc-prompt"><div class="sc-prompt-text">What is the difference between "think hard" and "ultrathink"? When should I use each one?</div><button class="sc-copy-btn" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent);this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',2000)">Copy</button></div>
+<div class="sc-prompt"><div class="sc-prompt-text">Write me a meta-prompt for [describe your task]. I want the best possible prompt I could give you.</div><button class="sc-copy-btn" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent);this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',2000)">Copy</button></div>
+<div class="sc-prompt"><div class="sc-prompt-text">Give me 5 examples of "iterative refinement with specific direction" applied to writing a cover letter</div><button class="sc-copy-btn" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent);this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',2000)">Copy</button></div>
+</div></details>
 
 <hr class="chapter-sep">
 <div class="page-break"></div>
@@ -2528,7 +3343,7 @@ A practical framework for catching AI mistakes before they become your mistakes.
 <li><strong>Free plan:</strong> The most restrictive. You may hit limits after 10-20 messages depending on length.</li>
 <li><strong>Pro plan ($20/month):</strong> Significantly more usage, but you can still hit limits during heavy sessions.</li>
 <li><strong>Max plan ($100-200/month):</strong> Much higher limits. Designed for heavy daily use.</li>
-<li><strong>API (Claude Code):</strong> Pay per token. No hard rate limit, but costs scale with usage.</li>
+<li><strong>Claude Code:</strong> Included with Pro and Max plans. Usage counts against your plan's message allowance, with optional extra usage available at API rates.</li>
 </ul>
 
 <p>When you hit a limit: take a break, switch to a less demanding model (Haiku is faster and cheaper), or start a new conversation to reset context.</p>
@@ -2591,6 +3406,12 @@ Claude is the best tool for many tasks. But not all tasks. Here is an honest bre
 <div class="outcome-title">What You Now Have</div>
 A realistic understanding of what Claude can and cannot do. You know its limits, you know when other tools are the better choice, and you will not waste time trying to force Claude into tasks it was not built for. This makes you a more effective AI user than someone who only knows the highlight reel.
 </div>
+
+<details class="still-confused"><summary>Still confused? Ask Claude these prompts for more help:</summary><div class="sc-prompts">
+<div class="sc-prompt"><div class="sc-prompt-text">I tried to get Claude to do [task] and it did not work well. What tool should I use instead and why?</div><button class="sc-copy-btn" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent);this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',2000)">Copy</button></div>
+<div class="sc-prompt"><div class="sc-prompt-text">Give me a decision tree: when should I use Claude vs ChatGPT vs Gemini vs a Google search?</div><button class="sc-copy-btn" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent);this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',2000)">Copy</button></div>
+<div class="sc-prompt"><div class="sc-prompt-text">What are the top 5 things Claude is bad at, and what should I use instead for each one?</div><button class="sc-copy-btn" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent);this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',2000)">Copy</button></div>
+</div></details>
 
 <hr class="chapter-sep">
 <div class="page-break"></div>
@@ -2744,6 +3565,11 @@ Here is my resume: [paste or upload]
 
 Rewrite my experience bullets to align with this role. Do not lie or exaggerate. Reframe what I have done to emphasize what is most relevant.</div>
 
+<div class="callout callout-example">
+<div class="callout-title">Real-World Example: Competitor Price Monitoring</div>
+Small business owners on Reddit are sharing a workflow where they paste competitor product pages into Claude weekly and ask it to compare pricing, features, and positioning against their own offerings. One e-commerce seller reported catching a competitor's price drop within hours and adjusting their own pricing before losing sales. The pattern: save competitor URLs, paste the content into Claude every Monday, and ask for a structured comparison with action items.
+</div>
+
 <div class="chapter-outcome">
 <div class="outcome-title">What You Now Have</div>
 Eight proven workflows you can use immediately for emails, documents, data, research, content, systems, learning, and career work. Each one saves you 30 minutes to 3 hours compared to doing it manually.
@@ -2782,6 +3608,12 @@ Eight proven workflows you can use immediately for emails, documents, data, rese
 <div class="outcome-title">What You Now Have</div>
 A clear picture of what Claude Code can do and why it is worth the next few chapters of setup. You understand the difference between an AI you talk to and an AI that works for you.
 </div>
+
+<details class="still-confused"><summary>Still confused? Ask Claude these prompts for more help:</summary><div class="sc-prompts">
+<div class="sc-prompt"><div class="sc-prompt-text">Explain Claude Code to me like I have never used a terminal before. What can it actually do that regular Claude cannot?</div><button class="sc-copy-btn" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent);this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',2000)">Copy</button></div>
+<div class="sc-prompt"><div class="sc-prompt-text">Give me 5 specific things a non-developer could build with Claude Code this weekend</div><button class="sc-copy-btn" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent);this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',2000)">Copy</button></div>
+<div class="sc-prompt"><div class="sc-prompt-text">What is the difference between using Claude on the website vs Claude Code? When should I use which?</div><button class="sc-copy-btn" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent);this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',2000)">Copy</button></div>
+</div></details>
 
 <hr class="chapter-sep">
 <div class="page-break"></div>
@@ -2834,6 +3666,12 @@ A clear picture of what Claude Code can do and why it is worth the next few chap
 <div class="outcome-title">What You Now Have</div>
 Seven terminal commands that are all you need for Claude Code. You can navigate your computer, create folders, and troubleshoot basic errors. The terminal is no longer a mystery.
 </div>
+
+<details class="still-confused"><summary>Still confused? Ask Claude these prompts for more help:</summary><div class="sc-prompts">
+<div class="sc-prompt"><div class="sc-prompt-text">I am scared of the terminal. Walk me through opening it, typing my first command, and understanding what happened, step by step.</div><button class="sc-copy-btn" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent);this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',2000)">Copy</button></div>
+<div class="sc-prompt"><div class="sc-prompt-text">Explain the difference between a file path, a directory, and a command in the terminal like I am brand new</div><button class="sc-copy-btn" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent);this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',2000)">Copy</button></div>
+<div class="sc-prompt"><div class="sc-prompt-text">What are the 10 most common terminal mistakes beginners make and how do I fix each one?</div><button class="sc-copy-btn" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent);this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',2000)">Copy</button></div>
+</div></details>
 
 <hr class="chapter-sep">
 <div class="page-break"></div>
@@ -2911,6 +3749,12 @@ Seven terminal commands that are all you need for Claude Code. You can navigate 
 <div class="outcome-title">What You Now Have</div>
 Claude Code installed and verified on your computer. You have confirmed it works by creating a test file. You are ready to start building.
 </div>
+
+<details class="still-confused"><summary>Still confused? Ask Claude these prompts for more help:</summary><div class="sc-prompts">
+<div class="sc-prompt"><div class="sc-prompt-text">I got an error installing Claude Code. The error says: [paste your error]. What does this mean and how do I fix it?</div><button class="sc-copy-btn" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent);this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',2000)">Copy</button></div>
+<div class="sc-prompt"><div class="sc-prompt-text">Walk me through checking if Node.js and npm are installed correctly on my computer</div><button class="sc-copy-btn" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent);this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',2000)">Copy</button></div>
+<div class="sc-prompt"><div class="sc-prompt-text">I installed Claude Code but when I type "claude" nothing happens. Help me troubleshoot step by step.</div><button class="sc-copy-btn" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent);this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',2000)">Copy</button></div>
+</div></details>
 
 <hr class="chapter-sep">
 <div class="page-break"></div>
@@ -3077,6 +3921,13 @@ claude mcp remove fetch  # remove one</div>
 Claude connected to the outside world. It can read web pages, check your email, and look at your calendar. You have turned it from an isolated brain into an informed assistant.
 </div>
 
+<details class="still-confused"><summary>Still confused? Ask Claude these prompts for more help:</summary><div class="sc-prompts">
+<div class="sc-prompt"><div class="sc-prompt-text">Explain MCP servers to me like I am 10 years old. What do they do and why do I need them?</div><button class="sc-copy-btn" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent);this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',2000)">Copy</button></div>
+<div class="sc-prompt"><div class="sc-prompt-text">List every MCP server I can install right now and what each one does, in a simple table</div><button class="sc-copy-btn" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent);this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',2000)">Copy</button></div>
+<div class="sc-prompt"><div class="sc-prompt-text">I connected Gmail to Claude but it is not working. Walk me through troubleshooting step by step.</div><button class="sc-copy-btn" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent);this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',2000)">Copy</button></div>
+<div class="sc-prompt"><div class="sc-prompt-text">Is it safe to connect my personal email and calendar to Claude? What are the risks and how do I minimize them?</div><button class="sc-copy-btn" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent);this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',2000)">Copy</button></div>
+</div></details>
+
 <hr class="chapter-sep">
 <div class="page-break"></div>
 
@@ -3099,6 +3950,16 @@ Claude connected to the outside world. It can read web pages, check your email, 
 </table>
 
 <p>Good news: with <code>/schedule</code>, just describe the timing in English and Claude figures out the cron expression.</p>
+
+<div class="callout callout-example">
+<div class="callout-title">Real-World Example: The Morning Briefing Agent</div>
+In early 2026, developers and business owners started sharing a pattern called the "morning briefing agent" on Reddit and X. The setup: schedule Claude Code to run at 6am every weekday, check your email, calendar, and a list of industry news sources. By the time you sit down with coffee, there is a one-page briefing waiting for you: what is on your calendar, which emails need a response, and anything relevant that happened overnight in your field. One dental practice group with 30 locations uses a version of this to query financial performance across all their offices in plain English every morning.
+</div>
+
+<div class="callout callout-example">
+<div class="callout-title">Real-World Example: Overnight Code Review</div>
+Developers on Hacker News have been sharing setups where they point Claude Code at their codebase before going to bed. By morning, it has reviewed recent changes, run the test suite, flagged potential issues, and left a summary. The pattern works for non-code tasks too: schedule Claude to review your week's documents, identify inconsistencies, and compile a list of items that need your attention.
+</div>
 
 <div class="chapter-outcome">
 <div class="outcome-title">What You Now Have</div>
@@ -3230,7 +4091,7 @@ All prices are approximate as of April 2026 and may change. Always verify curren
 
 <table class="privacy-table">
 <tr><th>Tool</th><th>Best For</th><th>Cost</th><th>Level</th></tr>
-<tr><td><strong>Midjourney</strong><br>Highest-quality AI image generation, runs through Discord or web app</td><td>Professional-grade illustrations, art, marketing visuals</td><td>$10-120/mo</td><td>Intermediate</td></tr>
+<tr><td><strong>Midjourney</strong><br>Highest-quality AI image generation, runs through Discord or web app</td><td>Professional-grade illustrations, art, marketing visuals</td><td>$10-120/mo (no free tier)</td><td>Intermediate</td></tr>
 <tr><td><strong>DALL-E (ChatGPT)</strong><br>OpenAI's image generator, built into ChatGPT</td><td>Quick image generation inside a conversation</td><td>Included with ChatGPT Plus ($20/mo)</td><td>Beginner</td></tr>
 <tr><td><strong>Stable Diffusion</strong><br>Open-source image model you can run on your own computer</td><td>Free unlimited generation if you have a GPU, full control</td><td>Free (local) or $0.01+/image via API</td><td>Advanced</td></tr>
 <tr><td><strong>Leonardo AI</strong><br>Web-based image generator with generous free tier</td><td>Beginners who want to try AI image generation without paying</td><td>Free (150 tokens/day) or $12-48/mo</td><td>Beginner</td></tr>
@@ -3245,8 +4106,8 @@ All prices are approximate as of April 2026 and may change. Always verify curren
 <tr><td><strong>Claude</strong><br>Anthropic's AI assistant, excels at long-form writing and nuance</td><td>Long-form content, analysis, writing that sounds human</td><td>Free or $20-200/mo</td><td>Beginner</td></tr>
 <tr><td><strong>ChatGPT</strong><br>OpenAI's general-purpose AI with web browsing and image gen</td><td>All-around tasks, especially when you need web access</td><td>Free or $20-200/mo</td><td>Beginner</td></tr>
 <tr><td><strong>Jasper</strong><br>AI writing platform built specifically for marketing teams</td><td>Marketing copy, ad campaigns, brand voice consistency</td><td>$39-69/mo</td><td>Beginner</td></tr>
-<tr><td><strong>Copy.ai</strong><br>AI copywriting tool with workflow templates</td><td>Quick marketing copy, social posts, email sequences</td><td>$36-49/mo</td><td>Beginner</td></tr>
-<tr><td><strong>Writesonic</strong><br>AI writer with SEO optimization built in</td><td>Blog posts and SEO-focused content at scale</td><td>$39-99/mo</td><td>Beginner</td></tr>
+<tr><td><strong>Copy.ai</strong><br>AI copywriting tool with workflow templates</td><td>Quick marketing copy, social posts, email sequences</td><td>Free (chat) or $29-249/mo</td><td>Beginner</td></tr>
+<tr><td><strong>Writesonic</strong><br>AI writer with SEO optimization built in</td><td>Blog posts and SEO-focused content at scale</td><td>$79-249/mo</td><td>Beginner</td></tr>
 </table>
 
 <h3>Social Media</h3>
@@ -3254,7 +4115,7 @@ All prices are approximate as of April 2026 and may change. Always verify curren
 <table class="privacy-table">
 <tr><th>Tool</th><th>Best For</th><th>Cost</th><th>Level</th></tr>
 <tr><td><strong>Buffer</strong><br>Simple social media scheduling with AI-powered captions</td><td>Solo creators and small teams who want easy scheduling</td><td>Free (3 channels) or $5-10/mo per channel</td><td>Beginner</td></tr>
-<tr><td><strong>Hootsuite</strong><br>Enterprise-grade social media management platform</td><td>Agencies and teams managing many accounts</td><td>$99-249/mo</td><td>Intermediate</td></tr>
+<tr><td><strong>Hootsuite</strong><br>Enterprise-grade social media management platform</td><td>Agencies and teams managing many accounts</td><td>$199-499/mo</td><td>Intermediate</td></tr>
 <tr><td><strong>Lately AI</strong><br>AI that repurposes long-form content into social media posts</td><td>Turning blogs, podcasts, and videos into social content</td><td>$19-239/mo</td><td>Intermediate</td></tr>
 <tr><td><strong>Taplio</strong><br>LinkedIn-specific growth and content tool</td><td>Building a personal brand on LinkedIn</td><td>$39-199/mo</td><td>Beginner</td></tr>
 <tr><td><strong>Typefully</strong><br>Writing and scheduling tool for X/Twitter, LinkedIn, and more</td><td>Thread creation and cross-platform posting</td><td>Free or $8-39/mo</td><td>Beginner</td></tr>
@@ -3286,9 +4147,9 @@ All prices are approximate as of April 2026 and may change. Always verify curren
 <table class="privacy-table">
 <tr><th>Tool</th><th>Best For</th><th>Cost</th><th>Level</th></tr>
 <tr><td><strong>GitHub Copilot</strong><br>AI code completion that works inside your editor</td><td>Inline code suggestions while you type</td><td>Free (limited) or $10-39/mo</td><td>Intermediate</td></tr>
-<tr><td><strong>Cursor</strong><br>AI-first code editor built on VS Code</td><td>Full AI-powered coding with chat and agent mode</td><td>Free or $20-200/mo</td><td>Intermediate</td></tr>
+<tr><td><strong>Cursor</strong><br>AI-first code editor built on VS Code</td><td>Full AI-powered coding with chat and agent mode</td><td>Free (Hobby) or $20-200/mo</td><td>Intermediate</td></tr>
 <tr><td><strong>Replit</strong><br>Browser-based coding environment with AI assistant</td><td>Building and deploying apps without local setup</td><td>Free or paid plans available</td><td>Beginner</td></tr>
-<tr><td><strong>Claude Code</strong><br>Anthropic's agentic coding tool (the focus of this guide)</td><td>Building full projects, automation, file management from terminal</td><td>Pay-per-use via API</td><td>Beginner to Advanced</td></tr>
+<tr><td><strong>Claude Code</strong><br>Anthropic's agentic coding tool (the focus of this guide)</td><td>Building full projects, automation, file management from terminal</td><td>Included with Pro ($20/mo) or Max ($100-200/mo)</td><td>Beginner to Advanced</td></tr>
 <tr><td><strong>v0 by Vercel</strong><br>AI UI generator that creates React components from descriptions</td><td>Quickly generating web UI components and full pages</td><td>Free or $20-100/mo</td><td>Intermediate</td></tr>
 </table>
 
@@ -3306,8 +4167,8 @@ All prices are approximate as of April 2026 and may change. Always verify curren
 
 <table class="privacy-table">
 <tr><th>Tool</th><th>Best For</th><th>Cost</th><th>Level</th></tr>
-<tr><td><strong>Notion AI</strong><br>AI features built into the Notion workspace</td><td>Writing, summarizing, and organizing within Notion</td><td>Included with Business plan ($18/mo) or AI add-on</td><td>Beginner</td></tr>
-<tr><td><strong>Zapier</strong><br>No-code automation platform connecting 6,000+ apps</td><td>Automating workflows between different apps without code</td><td>Free (100 tasks) or $20-69/mo</td><td>Beginner</td></tr>
+<tr><td><strong>Notion AI</strong><br>AI features built into the Notion workspace</td><td>Writing, summarizing, and organizing within Notion</td><td>Included with Business ($18/mo) and Enterprise plans; standalone AI add-on discontinued for new users</td><td>Beginner</td></tr>
+<tr><td><strong>Zapier</strong><br>No-code automation platform connecting 6,000+ apps</td><td>Automating workflows between different apps without code</td><td>Free (100 tasks/mo) or $20-69/mo</td><td>Beginner</td></tr>
 <tr><td><strong>Make.com</strong><br>Visual automation builder (more flexible than Zapier)</td><td>Complex multi-step automations with visual workflow design</td><td>Free or $9-29/mo</td><td>Intermediate</td></tr>
 <tr><td><strong>Reclaim AI</strong><br>AI calendar assistant that optimizes your schedule</td><td>Automatically blocking focus time, habits, and meeting scheduling</td><td>Free or $8-18/mo</td><td>Beginner</td></tr>
 </table>
@@ -3459,6 +4320,19 @@ This section is for educational purposes. Career outcomes depend on many factors
 <li><strong>AI Compliance Manager:</strong> Ensuring ethical and legal AI use</li>
 <li><strong>AI-Augmented [Your Job]:</strong> Any role where AI skills make you more productive</li>
 </ul>
+
+<div class="career-input-section" id="career-input-section">
+<h3 style="margin-top:0;">What is your career or role?</h3>
+<p style="font-size:0.92em;color:var(--text-secondary);margin-bottom:12px;">Type your job title or career below and we will show you exactly how AI is likely to impact your role, plus specific ways to use it right now.</p>
+<input type="text" id="career-role-input" placeholder="e.g. Teacher, Nurse, Marketer, Accountant, Designer...">
+<button onclick="window.generateCareerInsight()">Show Me</button>
+<div id="career-result-container"></div>
+</div>
+
+<div id="get-ahead-personalized" style="display:none;">
+<h3 style="margin-top:0;">Your Personalized "How to Get Ahead" Plan</h3>
+<div id="get-ahead-content"></div>
+</div>
 
 <h3>How to position yourself</h3>
 
@@ -3682,7 +4556,7 @@ A practical understanding of the privacy and security considerations around AI t
 <li><strong>Chapter 8:</strong> A verification framework that protects you from AI mistakes.</li>
 <li><strong>Chapter 9:</strong> A realistic understanding of Claude's limitations and when to use other tools instead.</li>
 <li><strong>Chapter 11:</strong> Eight workflows that save hours every week on emails, documents, data, content, and career work.</li>
-<li><strong>Chapters 14-16:</strong> Claude Code installed and your first real project built. You can make websites, apps, and tools with plain English.</li>
+<li><strong>Chapters 12-16:</strong> Claude Code installed and your first real project built. You can make websites, apps, and tools with plain English.</li>
 <li><strong>Chapter 17:</strong> A CLAUDE.md file that gives Claude permanent memory of your preferences.</li>
 <li><strong>Chapter 18:</strong> MCP servers connecting Claude to email, calendar, and the web.</li>
 <li><strong>Chapter 19:</strong> Your first automation. Claude works for you on a schedule.</li>
@@ -3765,13 +4639,31 @@ Everything. A personalized AI profile, a verification framework, eight workflows
 <label>Task category</label>
 <select id="pb-category" onchange="updatePBTasks()">
 <option value="">Select a category...</option>
-<option value="email">Email</option>
-<option value="content">Content Creation</option>
-<option value="research">Research</option>
-<option value="analysis">Analysis</option>
-<option value="personal">Personal</option>
-<option value="career">Career</option>
+<option value="email">Email and Communication</option>
+<option value="content">Content and Social Media</option>
+<option value="research">Research and Analysis</option>
+<option value="analysis">Data Analysis</option>
+<option value="business">Business Operations</option>
+<option value="education">Education and Learning</option>
+<option value="creative">Creative Writing</option>
+<option value="code">Code and Technical</option>
+<option value="health">Health and Wellness</option>
+<option value="finance">Finance and Budgeting</option>
+<option value="legal">Legal and Documents</option>
+<option value="career">Job Search and Career</option>
+<option value="home">Home and Life</option>
+<option value="customerservice">Customer Service</option>
+<option value="marketing">Marketing</option>
+<option value="data">Data and Spreadsheets</option>
+<option value="__custom__">+ Add Custom Category...</option>
 </select>
+<div id="pb-custom-cat-area" style="display:none;margin-top:8px;">
+<input type="text" id="pb-custom-cat-name" placeholder="Enter your custom category name..." style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-family:inherit;font-size:0.9em;background:var(--bg);color:var(--text);outline:none;">
+<div style="display:flex;gap:8px;margin-top:6px;">
+<button onclick="addCustomCategory()" style="padding:6px 14px;background:var(--purple);color:#fff;border:none;border-radius:6px;font-family:inherit;font-size:0.85em;font-weight:600;cursor:pointer;">Add Category</button>
+<button onclick="document.getElementById('pb-custom-cat-area').style.display='none';document.getElementById('pb-category').value='';" style="padding:6px 14px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text-secondary);font-family:inherit;font-size:0.85em;cursor:pointer;">Cancel</button>
+</div>
+</div>
 
 <label>Specific task</label>
 <select id="pb-task">
@@ -3844,6 +4736,52 @@ Everything. A personalized AI profile, a verification framework, eight workflows
 </div>
 <div class="pb-explain" id="pb-explain"></div>
 </div>
+
+<hr class="chapter-sep">
+<div class="page-break"></div>
+
+<!-- QUICK REFERENCE CARD -->
+<h2 id="quick-reference">Quick Reference Card</h2>
+
+<p>If you read nothing else, or if you need a refresher, here are the most important takeaways from the entire guide on one page.</p>
+
+<div class="callout callout-tip">
+<div class="callout-title">The 5 Things That Matter Most</div>
+<ol>
+<li><strong>Tell Claude who you are.</strong> A personalization prompt (Chapter 3) is the single highest-impact thing you can do. Every response improves when Claude knows your context.</li>
+<li><strong>Be specific.</strong> "Write me an email" gets generic output. "Write a follow-up email to a client who ghosted my proposal, warm but direct, under 100 words" gets something you can actually send.</li>
+<li><strong>Iterate, do not accept.</strong> The first response is a draft. Give specific feedback: "Make the opening more direct" or "Cut 30% of the word count." Claude gets dramatically better with direction.</li>
+<li><strong>Verify important claims.</strong> AI can state wrong things confidently. For anything you will stake your reputation on, check the key facts independently.</li>
+<li><strong>Use Claude Code for real work.</strong> The browser chat is great for conversations. Claude Code builds things, automates tasks, and connects to your life. That is where the real leverage lives.</li>
+</ol>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:20px 0;">
+<div style="background:var(--green-bg);border:1px solid var(--green-border);border-radius:8px;padding:14px;">
+<strong style="color:var(--green-dark);font-size:0.9em;">POWER PHRASES</strong>
+<ul style="font-size:0.88em;margin-top:8px;">
+<li>"Think step by step"</li>
+<li>"Check your work"</li>
+<li>"Give me 3 options"</li>
+<li>"Match this example"</li>
+<li>"Be specific, not generic"</li>
+<li>"Ultrathink" (deep analysis)</li>
+</ul>
+</div>
+<div style="background:var(--red-bg);border:1px solid var(--red-border);border-radius:8px;padding:14px;">
+<strong style="color:var(--red);font-size:0.9em;">NEVER DO THIS</strong>
+<ul style="font-size:0.88em;margin-top:8px;">
+<li>Paste passwords or SSNs</li>
+<li>Trust medical/legal output blindly</li>
+<li>Submit AI text as your own (school)</li>
+<li>Share API keys publicly</li>
+<li>Skip verification on key claims</li>
+<li>Put patient data (PHI) in chat</li>
+</ul>
+</div>
+</div>
+
+<p style="font-size:0.9em;color:var(--text-muted);margin-top:12px;">Bookmark this section. Come back to it when you need a quick reminder of what matters. The rest of the guide goes deep on each of these points.</p>
 
 <hr class="chapter-sep">
 <div class="page-break"></div>
@@ -4014,6 +4952,18 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
 <hr class="chapter-sep">
 <div class="page-break"></div>
 
+<!-- POWER TRICKS LIBRARY -->
+<h2 id="power-tricks-library">Power Tricks Library</h2>
+<p>Quick reference for all power tricks from Chapter 7. Search, copy, and use them instantly.</p>
+
+<div class="power-tricks-library">
+<input type="text" class="ptl-search" id="ptl-search" placeholder="Search tricks...">
+<div id="ptl-cards"></div>
+</div>
+
+<hr class="chapter-sep">
+<div class="page-break"></div>
+
 <!-- GLOSSARY -->
 <h2 id="glossary">Glossary: AI Terms in Plain English</h2>
 
@@ -4111,7 +5061,7 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
     { id: 'ch1', title: 'Chapter 1: How AI Got Here', part: 1, time: '15 min' },
     { id: 'ch2', title: 'Chapter 2: What Claude Actually Is', part: 1, time: '10 min' },
     { id: 'ch3', title: 'Chapter 3: Make Claude Yours', part: 1, time: '12 min' },
-    { id: 'ch4', title: 'Chapter 4: You Are Not Cheating', part: 1, time: '6 min' },
+    { id: 'ch4', title: 'Chapter 4: When to Implement AI', part: 1, time: '6 min' },
     { id: 'ch5', title: 'Chapter 5: AI Literacy Fundamentals', part: 1, time: '14 min' },
     { id: 'ch6', title: 'Chapter 6: Coming from ChatGPT', part: 1, time: '8 min' },
     { id: 'ch7', title: 'Chapter 7: Power Tricks', part: 1, time: '15 min' },
@@ -4136,10 +5086,12 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
     { id: 'ch26', title: 'Chapter 26: What You Built', part: 4, time: '5 min' },
     { id: 'roi-section', title: 'ROI Calculator', part: 5, time: '3 min' },
     { id: 'prompt-builder-section', title: 'Prompt Builder', part: 5, time: '3 min' },
+    { id: 'quick-reference', title: 'Quick Reference Card', part: 5, time: '2 min' },
     { id: 'appendix-a', title: 'Appendix A: Troubleshooting', part: 6 },
     { id: 'appendix-b', title: 'Appendix B: Prompt Templates', part: 6 },
     { id: 'appendix-c', title: 'Appendix C: Command Reference', part: 6 },
     { id: 'appendix-d', title: 'Appendix D: Plan Comparison', part: 6 },
+    { id: 'power-tricks-library', title: 'Power Tricks Library', part: 6 },
     { id: 'glossary', title: 'Glossary', part: 6 }
   ];
 
@@ -4170,8 +5122,8 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
       optional: ['ch16','ch17','ch18','ch19','ch23','appendix-a','appendix-c','appendix-d','glossary','roi-section','prompt-builder-section']
     },
     'healthcare': {
-      essential: ['ch1','ch2','ch3','ch4','ch5','ch7','ch8','ch9','ch22','appendix-b'],
-      recommended: ['ch6','ch10','ch11','ch12','ch13','ch15','ch16','ch21'],
+      essential: ['ch1','ch2','ch3','ch4','ch5','ch7','ch8','ch9','ch25','appendix-b'],
+      recommended: ['ch6','ch10','ch11','ch12','ch13','ch15','ch16','ch21','ch22'],
       optional: ['ch14','ch17','ch18','ch19','ch20','ch23','appendix-a','appendix-c','appendix-d','glossary','roi-section','prompt-builder-section']
     },
     'personal': {
@@ -4413,6 +5365,12 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
     {q:"help", a:"I can answer questions about AI, Claude, this guide, or help you find specific topics. Try asking something like: 'What is Claude Code?', 'Is Claude free?', 'How do I get started?', or 'Can Claude help with my business?'", ch:null},
     {q:"start", a:"Start with Chapter 1 to understand how AI got to where it is today. Then Chapter 2 explains what Claude specifically is. Chapter 3 shows you how to personalize it for your needs. From there, the guide builds step by step.", ch:"ch1"},
     {q:"where should i start", a:"Start with Chapter 1 to understand how AI got to where it is today. Then Chapter 2 explains what Claude specifically is. Chapter 3 shows you how to personalize it for your needs. From there, the guide builds step by step.", ch:"ch1"},
+    {q:"ai career paths", a:"AI is creating new career paths including AI Coach, AI Operations Professional, AI Compliance Manager, Prompt Engineer, and AI-augmented versions of existing roles. Professionals with AI skills are earning significantly more than those without. Chapter 24 covers the full landscape of how AI is changing careers across industries and what skills to develop.", ch:"ch24"},
+    {q:"ai careers", a:"New AI careers include: AI Coach, AI Operations, AI Compliance, Prompt Engineering, and AI-augmented versions of traditional roles. The biggest opportunity is becoming the AI expert in your current field. Chapter 24 has the full breakdown.", ch:"ch24"},
+    {q:"career advice", a:"The best career move right now is learning to use AI effectively in your current role. This makes you more valuable immediately. Chapter 24 covers which industries are transforming fastest, what skills to develop, and how to position yourself.", ch:"ch24"},
+    {q:"how to get ahead with ai", a:"Learn AI tools deeply (you are doing that now), apply them to your current role, build a portfolio of AI-assisted work, and stay current as the technology evolves. Chapter 24 has a detailed positioning strategy.", ch:"ch24"},
+    {q:"what skills should i learn", a:"Focus on: effective prompting, AI workflow design, critical evaluation of AI output, and understanding which AI tool fits which task. These meta-skills transfer across every AI platform. The full guide builds all of these.", ch:"ch7"},
+    {q:"ai for my industry", a:"AI applies differently across industries. Tell me your field and I can point you to the most relevant chapters. In general: Chapter 11 covers workflows, Chapter 23 covers the full tool ecosystem, and Chapter 24 covers industry-specific career impacts.", ch:"ch11"},
     {q:"help", a:"I can answer questions about AI, Claude, and everything in this guide. Try asking about: pricing, features, specific careers, how to get started, troubleshooting, privacy, or any topic covered in the chapters.", ch:null},
     {q:"thank you", a:"You are welcome! If you have more questions as you work through the guide, I am here. Good luck with your learning.", ch:null},
     {q:"thanks", a:"Happy to help! Feel free to ask more questions anytime.", ch:null},
@@ -4532,6 +5490,42 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
     {q:"what is extended thinking", a:"Extended thinking is when Claude takes extra time to reason through complex problems before responding. You can trigger it by adding phrases like 'think step by step' or 'ultrathink' to your prompt. It uses more tokens but produces more thorough, accurate responses for hard problems.", ch:"ch7"},
     {q:"can claude read my screen", a:"Claude cannot see your screen in real-time. In claude.ai, you can upload screenshots for it to analyze. Claude Code can read files on your computer that you give it access to, but it cannot observe your screen or other applications.", ch:"ch9"},
     {q:"how do i share a conversation", a:"In claude.ai, use the share button at the top of the conversation. This creates a shareable link. In Claude Code, conversations are local to your terminal session.", ch:null},
+    // === HEALTHCARE / HIPAA ===
+    {q:"is claude hipaa compliant", a:"Consumer Claude (claude.ai, Free/Pro plans) is NOT HIPAA compliant. You should never enter patient-identifiable information (names, medical record numbers, dates of birth linked to health info) into consumer AI tools. Anthropic does not sign Business Associate Agreements for consumer plans. For HIPAA-covered workflows, use enterprise-grade AI solutions with a BAA, or anonymize all data before using Claude.", ch:"ch25"},
+    {q:"can nurses use claude", a:"Yes. Nurses can use Claude for many tasks that do not involve patient-identifiable information: summarizing research papers, drafting CE materials, writing professional emails, prepping for certifications, understanding medical concepts, and creating educational handouts. Never put patient names, MRNs, or any PHI into Claude.", ch:"ch25"},
+    {q:"can healthcare workers use ai", a:"Yes, with important boundaries. Use AI for: research summaries, continuing education, documentation templates (no patient data), professional communication, and career development. Never put Protected Health Information (PHI) into consumer AI tools. Chapter 25 covers healthcare privacy in detail.", ch:"ch25"},
+    // === RESTAURANT / FOOD SERVICE ===
+    {q:"can a restaurant use claude", a:"Absolutely. Restaurant owners use Claude for: writing menu descriptions, responding to online reviews, creating employee training materials, analyzing sales data, writing marketing copy, planning specials, drafting supplier communications, creating social media content, and building operational procedures. Chapter 3 shows how to personalize Claude for your specific restaurant.", ch:"ch3"},
+    {q:"how can a restaurant use ai", a:"AI can help restaurants with: menu descriptions and seasonal updates, responding to reviews on Google/Yelp, social media content, employee handbooks and training docs, analyzing which menu items perform best, writing email marketing, creating promotional materials, and handling routine supplier correspondence. Start with Chapter 3 to personalize Claude for your restaurant.", ch:"ch3"},
+    // === EDUCATION / SCHOOLS ===
+    {q:"how can schools use ai", a:"Schools can use AI for: creating differentiated lesson plans, generating parent communications in multiple languages, building assessment rubrics, preparing IEP documentation frameworks, writing grant applications, developing professional development materials, and creating school-wide AI use policies. Important: never put student-identifiable information into consumer AI tools (FERPA). Chapter 25 covers educational privacy.", ch:"ch25"},
+    {q:"what about ferpa", a:"FERPA (Family Educational Rights and Privacy Act) protects student education records. Do not enter student names, grades, IDs, or other personally identifiable information from education records into consumer AI tools like Claude. Use anonymized data or institutional-approved AI solutions. Chapter 25 covers FERPA considerations in detail.", ch:"ch25"},
+    {q:"can principals use ai", a:"Yes. School administrators can use AI for: drafting communications to staff and parents, analyzing school data (anonymized), creating professional development plans, writing grant applications, building school improvement plans, preparing board presentations, and developing AI use policies for their schools. Chapter 24 covers how AI is changing education leadership.", ch:"ch24"},
+    // === ADDITIONAL COMMON QUESTIONS ===
+    {q:"can claude help me write a menu", a:"Yes. Give Claude your restaurant details, cuisine style, price range, and target audience. It can write compelling menu descriptions, suggest seasonal specials, create wine pairing notes, and format everything for print or digital display. Personalize Claude first (Chapter 3) for best results.", ch:"ch3"},
+    {q:"can claude help with my resume", a:"Yes. Upload the job posting and your current resume. Ask Claude to rewrite your experience bullets to align with the role without lying or exaggerating. Chapter 11 has a complete resume tailoring workflow, and the Prompt Builder has a career category with resume and cover letter options.", ch:"ch11"},
+
+    // === IMPROVEMENT CYCLE: April 4, 2026 (20 new entries) ===
+    {q:"is this guide worth it", a:"This guide is 26 chapters covering AI fundamentals, Claude, Claude Code, 40+ tools, automation, and career strategy. It includes interactive tools (ROI calculator, prompt builder, quizzes), a built-in AI assistant, and personalized learning paths. It competes with courses charging $100 to $200. At $39 with a 30-day money-back guarantee, the risk is low and the depth is hard to find elsewhere.", ch:null},
+    {q:"is it worth it", a:"If you want to learn AI from scratch, build real things, and understand which tools to use for what, this guide covers more than any single course at this price. 26 chapters, 40+ tools, interactive exercises, and a built-in AI assistant. 30-day money-back guarantee.", ch:null},
+    {q:"how to automate email", a:"Two approaches: (1) In claude.ai, connect your Gmail through Settings > Connected Apps. Claude can then read, search, and draft emails. (2) In Claude Code, set up a Gmail MCP server and use /schedule to automate daily email triage, summaries, and draft responses. Chapter 18 covers MCP setup. Chapter 19 covers scheduling.", ch:"ch19"},
+    {q:"automate my email", a:"Connect Gmail to Claude Code via MCP servers (Chapter 18), then use /schedule to create an automated email routine. Example: 'Every weekday at 8am, check my Gmail, categorize unread messages, and save a summary.' Chapter 19 walks through this step by step.", ch:"ch19"},
+    {q:"can i use ai for school", a:"Yes, responsibly. AI is excellent for studying: explaining concepts, creating practice tests, outlining papers, and understanding difficult material. It should not be used to submit AI-written work as your own when your school prohibits it. Check your school's AI policy. Chapter 4 has a clear ethical framework for students.", ch:"ch4"},
+    {q:"using ai in school", a:"AI is a legitimate study tool when used transparently. Use it to explain concepts, generate practice problems, review your writing, and prepare for exams. Do not submit AI-generated work as your own unless your school allows it. Chapter 4 covers the ethics in detail.", ch:"ch4"},
+    {q:"whats the difference between models", a:"AI companies offer different models at different capability levels. Claude has Sonnet (fast, everyday use), Opus (most powerful, complex tasks), and Haiku (lightest, quick tasks). ChatGPT has GPT-4o and GPT-4. Google has Gemini Ultra, Flash, and Flash-Lite. Use the everyday model for most work and switch to the powerful model for hard problems.", ch:"ch2"},
+    {q:"what is the best ai", a:"There is no single best AI. Claude is strongest at writing, analysis, and Claude Code. ChatGPT is strongest at image generation and web browsing. Gemini integrates best with Google services. Perplexity is best for sourced research. The smart approach is knowing when to use each one. Chapter 6 compares them.", ch:"ch6"},
+    {q:"what is computer use", a:"Computer use is a feature where Claude can see your screen, move the mouse, click buttons, and navigate applications on your behalf. It is available in Claude Cowork and Claude Code for Pro and Max users, with no setup required. Think of it as giving Claude the ability to operate your computer like a human would.", ch:"ch12"},
+    {q:"what is claude cowork", a:"Claude Cowork is Anthropic's desktop application (available on macOS and Windows) that lets Claude work alongside you. It can open files, run development tools, point, click, and navigate your screen. It is now generally available with analytics and role-based access controls for Enterprise plans.", ch:"ch12"},
+    {q:"what is an ai agent", a:"An AI agent is software that does not just answer questions but takes actions on your behalf. Claude Code is an agent: it creates files, runs commands, builds projects, and connects to services. The key difference from a chatbot is that an agent can do things, not just say things.", ch:"glossary"},
+    {q:"what is context engineering", a:"Context engineering is the 2026 evolution of prompt engineering. Instead of just crafting the perfect prompt, you design everything around the prompt: what files Claude sees, what instructions it starts with, what tools it has access to, and what examples you provide. The CLAUDE.md file and MCP servers are context engineering tools.", ch:"ch17"},
+    {q:"how do i make money with ai", a:"AI can help you earn money in several ways: (1) Become more valuable at your current job by being the AI expert, (2) Freelance with AI-accelerated skills (writing, design, data analysis), (3) Build products or content faster, (4) Automate tasks and sell that time elsewhere. This guide covers practical business applications throughout, especially in Chapters 11, 22, and 24.", ch:"ch24"},
+    {q:"can claude help with side hustles", a:"Yes. Claude can help with product research, content creation, marketing copy, pricing strategy, customer communication, and building digital products. Claude Code can build websites, create tools, and automate repetitive tasks. Chapters 22 and 24 cover entrepreneurial applications.", ch:"ch22"},
+    {q:"what is new in claude 2026", a:"Major 2026 updates include: Claude Sonnet 4.6 with 1M token context window, Computer Use in Cowork and Claude Code (point, click, navigate your screen), Claude Cowork desktop app for macOS and Windows, Managed Agents for autonomous AI operations, MCP crossing 97 million installs, and Office integration for Excel and PowerPoint.", ch:"ch2"},
+    {q:"what is the ant cli", a:"The ant CLI is Anthropic's command-line client for the Claude API. It allows faster interaction with the API, integrates natively with Claude Code, and lets you version API resources in YAML files. It is a developer tool, not needed for everyday Claude use.", ch:"appendix-c"},
+    {q:"can claude use my computer", a:"Yes. With Computer Use (available for Pro and Max users), Claude can see your screen, move the mouse, click buttons, and navigate applications. In Claude Code, it can read and write files, run commands, and interact with services. Both require your permission for each action.", ch:"ch12"},
+    {q:"what are managed agents", a:"Managed Agents is a feature in Claude's API that lets you run Claude as an autonomous agent with secure sandboxing, built-in tools, and streaming. It is designed for developers building AI-powered applications. Most everyday users will not need this directly.", ch:"ch12"},
+    {q:"how do i use ai at work", a:"Start with the tasks you do most often: email drafting, meeting summaries, report writing, data analysis, and document review. Use Claude to draft, then review and edit. Chapter 7 has power tricks for professional output, and Chapter 11 has ready-to-use workflows for common work tasks.", ch:"ch11"},
+    {q:"can claude help with contracts", a:"Claude can help you understand contract language in plain English, draft initial versions, identify unusual or concerning clauses, and compare multiple contracts. It is not a lawyer and cannot provide legal advice. Always have a licensed attorney review anything you plan to sign.", ch:"ch7"}
   ];
 
   // ==================== HELPERS ====================
@@ -4591,6 +5585,12 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
     var docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
     var pct = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
     bar.style.width = Math.min(pct, 100) + '%';
+    // Back to top button visibility
+    var btt = document.getElementById('back-to-top-btn');
+    if (btt) {
+      if (scrollTop > 600) btt.classList.add('visible');
+      else btt.classList.remove('visible');
+    }
   }
   window.addEventListener('scroll', updateReadingProgress, { passive: true });
 
@@ -4618,53 +5618,130 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
     var profileBox = document.getElementById('sidebar-profile-box');
     profileBox.style.display = 'none';
 
-    var personaKey = profile && profile.personas && profile.personas[0] ? profile.personas[0] : null;
-    var map = personaKey && PERSONA_MAP[personaKey] ? PERSONA_MAP[personaKey] : null;
-
-    CHAPTERS.forEach(function(ch) {
-      var li = document.createElement('li');
-      var cb = document.createElement('input');
-      cb.type = 'checkbox';
-      cb.checked = !!progress[ch.id];
-      cb.addEventListener('change', function() {
-        var p = getProgress();
-        p[ch.id] = cb.checked;
-        saveProgress(p);
-        updateProgressBar();
-        if (cb.checked && MILESTONES[ch.id]) showToast(MILESTONES[ch.id].title, MILESTONES[ch.id].msg);
+    // Merge persona maps from ALL selected personas
+    var allPersonas = profile && profile.personas && profile.personas.length > 0 ? profile.personas : null;
+    var mergedMap = null;
+    if (allPersonas) {
+      mergedMap = { essential: [], recommended: [], optional: [] };
+      allPersonas.forEach(function(pk) {
+        var m = PERSONA_MAP[pk] || PERSONA_MAP['other'];
+        m.essential.forEach(function(id) { if (mergedMap.essential.indexOf(id) === -1) mergedMap.essential.push(id); });
+        m.recommended.forEach(function(id) { if (mergedMap.recommended.indexOf(id) === -1 && mergedMap.essential.indexOf(id) === -1) mergedMap.recommended.push(id); });
       });
-
-      var a = document.createElement('a');
-      a.href = '#' + ch.id;
-      a.textContent = ch.title;
-      a.addEventListener('click', function() {
-        if (window.innerWidth < 900) toggleSidebar();
-      });
-
-      li.appendChild(cb);
-      li.appendChild(a);
-
-      if (ch.time) {
-        var timeSpan = document.createElement('span');
-        timeSpan.className = 'ch-time';
-        timeSpan.textContent = ch.time;
-        li.appendChild(timeSpan);
-      }
-
-      if (map) {
-        var badge = document.createElement('span');
-        badge.className = 'ch-badge';
-        if (map.essential.indexOf(ch.id) !== -1) {
-          badge.classList.add('essential'); badge.textContent = 'Essential';
-        } else if (map.recommended.indexOf(ch.id) !== -1) {
-          badge.classList.add('recommended'); badge.textContent = 'Rec';
-        } else {
-          badge.classList.add('optional'); badge.textContent = 'Opt';
+      // Everything else is optional
+      CHAPTERS.forEach(function(ch) {
+        if (mergedMap.essential.indexOf(ch.id) === -1 && mergedMap.recommended.indexOf(ch.id) === -1) {
+          mergedMap.optional.push(ch.id);
         }
-        li.appendChild(badge);
-      }
+      });
+    }
 
-      list.appendChild(li);
+    // Collapsible part groups
+    var PART_GROUPS = [
+      { label: 'Part 1: Understanding AI', parts: [1], defaultOpen: true },
+      { label: 'Part 2: Becoming Effective', parts: [1], filter: function(ch) { return ch.id.match(/^ch([7-9]|1[01])$/); } },
+      { label: 'Part 3: Claude Code', parts: [2], filter: function(ch) { return ch.part === 2; } },
+      { label: 'Part 4: Automation', parts: [3], filter: function(ch) { return ch.part === 3; } },
+      { label: 'Part 5: Going Further', parts: [4], filter: function(ch) { return ch.part === 4; } },
+      { label: 'Tools & References', parts: [5, 6], filter: function(ch) { return ch.part === 5 || ch.part === 6; } }
+    ];
+
+    // Actually build groups from chapter data
+    var groups = [
+      { label: 'Part 1: Understanding AI', chapters: CHAPTERS.filter(function(c) { return ['ch1','ch2','ch3','ch4','ch5','ch6'].indexOf(c.id) !== -1; }), defaultOpen: true },
+      { label: 'Part 2: Becoming Effective', chapters: CHAPTERS.filter(function(c) { return ['ch7','ch8','ch9','ch10','ch11'].indexOf(c.id) !== -1; }), defaultOpen: false },
+      { label: 'Part 3: Claude Code', chapters: CHAPTERS.filter(function(c) { return ['ch12','ch13','ch14','ch15','ch16'].indexOf(c.id) !== -1; }), defaultOpen: false },
+      { label: 'Part 4: Automation', chapters: CHAPTERS.filter(function(c) { return ['ch17','ch18','ch19'].indexOf(c.id) !== -1; }), defaultOpen: false },
+      { label: 'Part 5: Going Further', chapters: CHAPTERS.filter(function(c) { return ['ch20','ch21','ch22','ch23','ch24','ch25','ch26'].indexOf(c.id) !== -1; }), defaultOpen: false },
+      { label: 'Tools', chapters: CHAPTERS.filter(function(c) { return c.part === 5 || c.part === 6; }), defaultOpen: false }
+    ];
+
+    groups.forEach(function(group) {
+      // Count completed in this group
+      var groupCompleted = 0;
+      group.chapters.forEach(function(ch) { if (progress[ch.id]) groupCompleted++; });
+      var groupTotal = group.chapters.length;
+
+      // Create part header
+      var partHeader = document.createElement('li');
+      partHeader.style.cssText = 'padding:10px 20px 6px;cursor:pointer;background:var(--bg-code);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;';
+      var partLabel = document.createElement('span');
+      partLabel.style.cssText = 'font-weight:700;font-size:0.85em;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.3px;';
+      partLabel.textContent = group.label;
+      var partProgress = document.createElement('span');
+      partProgress.style.cssText = 'font-size:0.75em;color:var(--text-muted);font-weight:600;';
+      partProgress.textContent = groupCompleted + '/' + groupTotal;
+      if (groupCompleted === groupTotal && groupTotal > 0) partProgress.style.color = 'var(--green)';
+      var partArrow = document.createElement('span');
+      partArrow.style.cssText = 'font-size:0.7em;color:var(--text-muted);margin-left:6px;transition:transform 0.2s;';
+      partArrow.textContent = group.defaultOpen ? '\u25BC' : '\u25B6';
+
+      partHeader.appendChild(partLabel);
+      var rightSide = document.createElement('span');
+      rightSide.style.cssText = 'display:flex;align-items:center;gap:4px;';
+      rightSide.appendChild(partProgress);
+      rightSide.appendChild(partArrow);
+      partHeader.appendChild(rightSide);
+      list.appendChild(partHeader);
+
+      // Create chapter items container
+      var chapterContainer = document.createElement('div');
+      chapterContainer.style.display = group.defaultOpen ? 'block' : 'none';
+
+      partHeader.addEventListener('click', function() {
+        var isOpen = chapterContainer.style.display !== 'none';
+        chapterContainer.style.display = isOpen ? 'none' : 'block';
+        partArrow.textContent = isOpen ? '\u25B6' : '\u25BC';
+      });
+
+      group.chapters.forEach(function(ch) {
+        var li = document.createElement('li');
+        var cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.checked = !!progress[ch.id];
+        cb.addEventListener('change', function() {
+          var p = getProgress();
+          p[ch.id] = cb.checked;
+          saveProgress(p);
+          updateProgressBar();
+          buildSidebar(); // Rebuild to update group counts
+          if (cb.checked && MILESTONES[ch.id]) showToast(MILESTONES[ch.id].title, MILESTONES[ch.id].msg);
+        });
+
+        var a = document.createElement('a');
+        a.href = '#' + ch.id;
+        a.textContent = ch.title;
+        a.addEventListener('click', function() {
+          if (window.innerWidth < 900) toggleSidebar();
+        });
+
+        li.appendChild(cb);
+        li.appendChild(a);
+
+        if (ch.time) {
+          var timeSpan = document.createElement('span');
+          timeSpan.className = 'ch-time';
+          timeSpan.textContent = ch.time;
+          li.appendChild(timeSpan);
+        }
+
+        if (mergedMap) {
+          var badge = document.createElement('span');
+          badge.className = 'ch-badge';
+          if (mergedMap.essential.indexOf(ch.id) !== -1) {
+            badge.classList.add('essential'); badge.textContent = 'Essential';
+          } else if (mergedMap.recommended.indexOf(ch.id) !== -1) {
+            badge.classList.add('recommended'); badge.textContent = 'Rec';
+          } else {
+            badge.classList.add('optional'); badge.textContent = 'Opt';
+          }
+          li.appendChild(badge);
+        }
+
+        chapterContainer.appendChild(li);
+      });
+
+      list.appendChild(chapterContainer);
     });
 
     updateProgressBar();
@@ -4689,22 +5766,22 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
     var overlay = document.createElement('div');
     overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.5s ease;';
     var card = document.createElement('div');
-    card.style.cssText = 'background:white;border-radius:20px;padding:48px 40px;max-width:520px;text-align:center;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.3);';
+    card.style.cssText = 'background:var(--bg);border-radius:20px;padding:48px 40px;max-width:520px;text-align:center;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.3);color:var(--text);';
     var profile = getProfile();
     var name = profile && profile.name ? profile.name : 'You';
     card.innerHTML =
       '<div style="font-size:48px;margin-bottom:16px;">Congratulations.</div>' +
       '<h2 style="font-size:28px;font-weight:800;margin-bottom:16px;color:#6d28d9;">' + name + ', you finished The AI Playbook.</h2>' +
-      '<p style="font-size:16px;color:#374151;margin-bottom:12px;">Most people never get past Chapter 3. You went through all ' + CHAPTERS.length + ' sections. That puts you ahead of the vast majority of people using AI today.</p>' +
-      '<p style="font-size:16px;color:#374151;margin-bottom:12px;">But finishing the guide is not the end. It is the starting line. The real value comes from what you do next: applying what you learned, building workflows, automating the repetitive, and continuing to learn as AI evolves.</p>' +
-      '<p style="font-size:16px;color:#374151;margin-bottom:24px;">Here is what to do now:</p>' +
+      '<p style="font-size:16px;color:var(--text-secondary);margin-bottom:12px;">Most people never get past Chapter 3. You went through all ' + CHAPTERS.length + ' sections. That puts you ahead of the vast majority of people using AI today.</p>' +
+      '<p style="font-size:16px;color:var(--text-secondary);margin-bottom:12px;">But finishing the guide is not the end. It is the starting line. The real value comes from what you do next: applying what you learned, building workflows, automating the repetitive, and continuing to learn as AI evolves.</p>' +
+      '<p style="font-size:16px;color:var(--text-secondary);margin-bottom:24px;">Here is what to do now:</p>' +
       '<div style="text-align:left;margin-bottom:24px;">' +
-        '<div style="padding:8px 0;border-bottom:1px solid #e5e7eb;font-size:14px;color:#374151;"><strong style="color:#6d28d9;">1.</strong> Pick ONE workflow from Chapter 12 and set it up today.</div>' +
-        '<div style="padding:8px 0;border-bottom:1px solid #e5e7eb;font-size:14px;color:#374151;"><strong style="color:#6d28d9;">2.</strong> Revisit the ROI Calculator with real numbers from your last week.</div>' +
-        '<div style="padding:8px 0;border-bottom:1px solid #e5e7eb;font-size:14px;color:#374151;"><strong style="color:#6d28d9;">3.</strong> Join the community (newsletter + Discord) to stay current.</div>' +
-        '<div style="padding:8px 0;font-size:14px;color:#374151;"><strong style="color:#6d28d9;">4.</strong> Share this guide with one person who would benefit from it.</div>' +
+        '<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:14px;color:var(--text-secondary);"><strong style="color:#6d28d9;">1.</strong> Pick ONE workflow from Chapter 11 and set it up today.</div>' +
+        '<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:14px;color:var(--text-secondary);"><strong style="color:#6d28d9;">2.</strong> Revisit the ROI Calculator with real numbers from your last week.</div>' +
+        '<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:14px;color:var(--text-secondary);"><strong style="color:#6d28d9;">3.</strong> Join the community (newsletter + Discord) to stay current.</div>' +
+        '<div style="padding:8px 0;font-size:14px;color:var(--text-secondary);"><strong style="color:#6d28d9;">4.</strong> Share this guide with one person who would benefit from it.</div>' +
       '</div>' +
-      '<p style="font-size:14px;color:#6b7280;margin-bottom:20px;">The tools in this guide (Prompt Builder, ROI Calculator, AI Assistant, Glossary) are always here for you. Come back anytime.</p>' +
+      '<p style="font-size:14px;color:var(--text-muted);margin-bottom:20px;">The tools in this guide (Prompt Builder, ROI Calculator, AI Assistant, Glossary) are always here for you. Come back anytime.</p>' +
       '<button onclick="this.closest(\'div\').parentElement.remove();" style="background:#6d28d9;color:white;border:none;padding:14px 32px;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer;">Close and Keep Building</button>';
     overlay.appendChild(card);
     overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
@@ -4755,43 +5832,43 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
   var PERSONA_TIPS = {
     'business': {
       intro: 'As a business owner, AI is not a luxury anymore. Your competitors are already using it to write proposals, analyze markets, and automate operations. This guide will show you exactly how to do the same, starting today.',
-      tips: ['Start with Chapter 6 (Power Tricks) to immediately improve every email, proposal, and document you create.', 'The ROI Calculator in this guide will show you exactly how much time and money you can save.', 'Focus on workflows first (Chapter 12): email triage, report generation, and customer communication are the fastest wins.', 'You do NOT need to learn coding. Everything in Parts 1 and 2 works through simple conversations.'],
-      howTo: 'Go through Chapters 1-6 first to build your foundation. Then jump to Chapter 12 (Workflows) for immediate business impact. Come back to Claude Code (Part 3) when you are ready to automate.'
+      tips: ['Start with Chapter 7 (Power Tricks) to immediately improve every email, proposal, and document you create.', 'The ROI Calculator in this guide will show you exactly how much time and money you can save.', 'Focus on workflows first (Chapter 11): email triage, report generation, and customer communication are the fastest wins.', 'You do NOT need to learn coding. Everything in Part 1 works through simple conversations.'],
+      howTo: 'Go through Chapters 1-7 first to build your foundation. Then jump to Chapter 11 (Workflows) for immediate business impact. Come back to Claude Code (Part 2) when you are ready to automate.'
     },
     'student': {
       intro: 'AI is the most important skill you can develop right now for your career. Students who learn to work with AI effectively will have a massive advantage in every job market. This guide teaches you how to use it ethically and powerfully.',
-      tips: ['Read Chapter 4 (You Are Not Cheating) first. It will give you a clear framework for when AI use is appropriate and when it crosses the line.', 'Use Claude for studying, not shortcuts: have it explain concepts, create practice tests, and quiz you.', 'Build a portfolio of AI-assisted projects. Employers increasingly value candidates who can work effectively with AI.', 'The Power Tricks chapter (Chapter 6) will transform how you do research and write papers.'],
-      howTo: 'Start with Chapters 1-4 for context and ethics. Then Chapter 6 for power techniques. Use the Prompt Builder tool to create prompts for your specific assignments and projects.'
+      tips: ['Read Chapter 4 (When to Implement AI) first. It will give you a clear framework for when AI use is appropriate and when it crosses the line.', 'Use Claude for studying, not shortcuts: have it explain concepts, create practice tests, and quiz you.', 'Build a portfolio of AI-assisted projects. Employers increasingly value candidates who can work effectively with AI.', 'The Power Tricks chapter (Chapter 7) will transform how you do research and write papers.'],
+      howTo: 'Start with Chapters 1-4 for context and ethics. Then Chapter 7 for power techniques. Use the Prompt Builder tool to create prompts for your specific assignments and projects.'
     },
     'professional': {
       intro: 'AI skills are becoming as essential as Excel skills were 20 years ago. Professionals who integrate AI into their workflow are producing more, faster, and at higher quality. This guide gets you there without disrupting your current work.',
-      tips: ['Start using AI for your most repetitive tasks: email drafts, meeting summaries, status reports, and data analysis.', 'Chapter 6 (Power Tricks) will give you techniques to get dramatically better output from every prompt.', 'Learn to verify AI output (Chapter 8) before sharing anything with colleagues or clients.', 'The AI Tool Ecosystem chapter shows you which tools beyond Claude can help with specific parts of your job.'],
-      howTo: 'Chapters 1-3 for foundation, then jump to Chapter 6 (Power Tricks) and Chapter 12 (Workflows). These will have the most immediate impact on your daily work.'
+      tips: ['Start using AI for your most repetitive tasks: email drafts, meeting summaries, status reports, and data analysis.', 'Chapter 7 (Power Tricks) will give you techniques to get dramatically better output from every prompt.', 'Learn to verify AI output (Chapter 8) before sharing anything with colleagues or clients.', 'The AI Tool Ecosystem chapter (Chapter 23) shows you which tools beyond Claude can help with specific parts of your job.'],
+      howTo: 'Chapters 1-3 for foundation, then jump to Chapter 7 (Power Tricks) and Chapter 11 (Workflows). These will have the most immediate impact on your daily work.'
     },
     'creative': {
       intro: 'AI is not replacing creativity. It is removing the tedious parts so you can focus on the creative parts. Writers, designers, and content creators who embrace AI are producing more work, landing more clients, and spending less time on admin.',
-      tips: ['Use Claude for the business side of creative work: proposals, contracts, invoicing, client communication.', 'The Prompt Builder can generate creative briefs, content calendars, and brainstorming sessions tailored to your niche.', 'Check out the AI Tool Ecosystem chapter for image, video, and audio tools that complement Claude.', 'Claude is exceptional at adapting tone and voice. Train it on your writing style for consistent brand voice.'],
-      howTo: 'Chapters 1-3 for basics, then Chapter 6 for power techniques, then the AI Tool Ecosystem chapter for the full creative toolkit.'
+      tips: ['Use Claude for the business side of creative work: proposals, contracts, invoicing, client communication.', 'The Prompt Builder can generate creative briefs, content calendars, and brainstorming sessions tailored to your niche.', 'Check out the AI Tool Ecosystem chapter (Chapter 23) for image, video, and audio tools that complement Claude.', 'Claude is exceptional at adapting tone and voice. Train it on your writing style for consistent brand voice.'],
+      howTo: 'Chapters 1-3 for basics, then Chapter 7 for power techniques, then the AI Tool Ecosystem chapter (Chapter 23) for the full creative toolkit.'
     },
     'educator': {
       intro: 'AI is transforming education whether we are ready or not. Teachers who understand AI can create better lessons, save hours on admin, and help students develop AI literacy. This guide gives you the knowledge to lead that conversation.',
-      tips: ['Claude can generate lesson plans, rubrics, study guides, and differentiated materials in minutes.', 'Chapter 4 (You Are Not Cheating) gives you a framework to teach students about ethical AI use.', 'Use Claude to create personalized feedback for student work at scale.', 'The guide covers how to detect AI-generated student work and how to design assignments that work WITH AI, not against it.'],
-      howTo: 'Start with Chapters 1-4, paying special attention to Chapter 4 (ethics). Then Chapter 6 for power techniques you can use for lesson planning and grading.'
+      tips: ['Claude can generate lesson plans, rubrics, study guides, and differentiated materials in minutes.', 'Chapter 4 (When to Implement AI) gives you a framework to teach students about ethical AI use.', 'Use Claude to create personalized feedback for student work at scale.', 'The guide covers how to detect AI-generated student work and how to design assignments that work WITH AI, not against it.'],
+      howTo: 'Start with Chapters 1-4, paying special attention to Chapter 4 (ethics). Then Chapter 7 for power techniques you can use for lesson planning and grading.'
     },
     'healthcare': {
       intro: 'AI in healthcare is growing rapidly, but privacy and accuracy matter more here than anywhere else. This guide teaches you how to use AI effectively while respecting patient privacy, HIPAA considerations, and clinical accuracy.',
-      tips: ['NEVER put patient-identifiable information into any AI tool. Chapter 22 (Security) covers this in detail.', 'Claude is excellent for drafting documentation, care plans, patient education materials, and continuing education.', 'Use AI for administrative tasks (scheduling notes, referral letters, billing descriptions) to free up clinical time.', 'Always verify clinical information from AI. Chapter 8 (Verify Output) is essential reading for healthcare use.'],
-      howTo: 'Start with Chapters 1-3, then immediately read Chapter 22 (Security and Privacy). Then Chapter 6 for power techniques and Chapter 12 for healthcare workflows.'
+      tips: ['NEVER put patient-identifiable information into any AI tool. Chapter 25 (Security) covers this in detail.', 'Claude is excellent for drafting documentation, care plans, patient education materials, and continuing education.', 'Use AI for administrative tasks (scheduling notes, referral letters, billing descriptions) to free up clinical time.', 'Always verify clinical information from AI. Chapter 8 (Verify Output) is essential reading for healthcare use.'],
+      howTo: 'Start with Chapters 1-3, then immediately read Chapter 25 (Security and Privacy). Then Chapter 7 for power techniques and Chapter 11 for healthcare workflows.'
     },
     'personal': {
       intro: 'You do not need to be a professional or business owner to get value from AI. Claude can help with everything from meal planning and budgeting to understanding medical bills and planning vacations. This guide shows you how.',
-      tips: ['Start with Chapter 3 (Make Claude Yours) and tell it about your life, preferences, and goals.', 'The 10 instant use cases in the Quick Start cover everyday tasks: meals, budgets, emails, workouts, travel.', 'Use the Power Tricks chapter to get better answers to any question about your daily life.', 'Claude is great at explaining complex things simply: insurance documents, lease agreements, medical information, tax forms.'],
-      howTo: 'Chapters 1-3 will get you started quickly. Then browse the use cases and try the Prompt Builder for tasks specific to your life.'
+      tips: ['Start with Chapter 3 (Make Claude Yours) and tell it about your life, preferences, and goals.', 'Chapter 11 (Workflows) covers everyday tasks: emails, documents, content, research, and more.', 'Use the Power Tricks chapter (Chapter 7) to get better answers to any question about your daily life.', 'Claude is great at explaining complex things simply: insurance documents, lease agreements, medical information, tax forms.'],
+      howTo: 'Chapters 1-3 will get you started quickly. Then Chapter 7 for power tricks and the Prompt Builder for tasks specific to your life.'
     },
     'technical': {
       intro: 'You already know how to use AI for chat. This guide is worth your time because of Parts 3 and 4: Claude Code, MCP servers, 24/7 automation, and building real systems. Skip the basics and go straight to what you cannot find on YouTube.',
-      tips: ['Jump to Chapter 14 (What Claude Code Is) immediately.', 'The MCP server chapter and 24/7 setup guide are the highest-value sections for you.', 'Power Tricks (Chapter 6) still has techniques that will improve your output even as an experienced user.', 'The AI Tool Ecosystem chapter is a solid reference for tools you might not have tried.'],
-      howTo: 'Skim Chapters 1-5 quickly (you know most of this). Read Chapter 6 carefully. Then dive into Part 3 (Claude Code) and Part 4 (Automation).'
+      tips: ['Jump to Chapter 12 (Why Claude Code Changes Everything) immediately.', 'The MCP server chapter (Chapter 18) and 24/7 setup guide (Chapter 20) are the highest-value sections for you.', 'Power Tricks (Chapter 7) still has techniques that will improve your output even as an experienced user.', 'The AI Tool Ecosystem chapter (Chapter 23) is a solid reference for tools you might not have tried.'],
+      howTo: 'Skim Chapters 1-5 quickly (you know most of this). Read Chapter 7 carefully. Then dive into Part 2 (Claude Code) and Part 4 (Going Further).'
     },
     'other': {
       intro: 'AI is for everyone, regardless of your background. This guide meets you where you are and takes you as far as you want to go. There is no wrong way to start.',
@@ -4809,49 +5886,70 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
     document.getElementById('dash-greeting').textContent = 'Your Personalized Guide';
     var roles = (profile.personas || []).map(function(p) { return PERSONA_LABELS[p] || p; }).join(', ');
     var expLabel = profile.experience === 'never' ? 'New to AI' : profile.experience === 'little' ? 'Some AI experience' : 'Regular AI user';
-    var personaKey = profile.personas && profile.personas[0] ? profile.personas[0] : 'other';
-    var map = PERSONA_MAP[personaKey] || PERSONA_MAP['other'];
-    var tips = PERSONA_TIPS[personaKey] || PERSONA_TIPS['other'];
-    var essentialLinks = map.essential.map(function(id) {
+    // Merge essential chapters from ALL selected personas
+    var allPersonas = (profile.personas && profile.personas.length > 0) ? profile.personas : ['other'];
+    var mergedEssential = [];
+    allPersonas.forEach(function(pk) {
+      var m = PERSONA_MAP[pk] || PERSONA_MAP['other'];
+      m.essential.forEach(function(id) { if (mergedEssential.indexOf(id) === -1) mergedEssential.push(id); });
+    });
+    var essentialLinks = mergedEssential.map(function(id) {
       var ch = CHAPTERS.find(function(c) { return c.id === id; });
       if (!ch) return '';
       var label = ch.title.replace(/^Chapter (\d+): /, 'Ch $1: ');
       return '<a href="#' + ch.id + '">' + label + '</a>';
-    }).filter(Boolean).slice(0, 7).join('');
+    }).filter(Boolean).slice(0, 9).join('');
 
-    var tipsHtml = tips.tips.map(function(t) { return '<li style="margin-bottom:6px;">' + t + '</li>'; }).join('');
+    // Merge tips from ALL selected personas, deduplicate
+    var allTips = [];
+    var seenTips = {};
+    allPersonas.forEach(function(pk) {
+      var t = PERSONA_TIPS[pk] || PERSONA_TIPS['other'];
+      t.tips.forEach(function(tip) {
+        var key = tip.substring(0, 40);
+        if (!seenTips[key]) { seenTips[key] = true; allTips.push(tip); }
+      });
+    });
+    var tipsHtml = allTips.slice(0, 6).map(function(t) {
+      var short = t.length > 120 ? t.substring(0, t.indexOf('.', 60) + 1) || t.substring(0, 120) + '...' : t;
+      return '<li style="margin-bottom:4px;">' + short + '</li>';
+    }).join('');
 
+    // Simplified milestones: just the self-check question
     var milestones = [
-      {phase:'Chapters 1-5: Foundation', goal:'You should understand what AI is, how Claude works, and have your personalized Claude profile set up. Check: can you explain AI to a friend in 30 seconds? Can you write a prompt that gets a useful response on the first try?', quiz:'Quiz after Chapter 5 tests your AI literacy fundamentals.'},
-      {phase:'Chapters 6-9: Becoming Effective', goal:'You should be using power tricks in every conversation, know how to verify AI output, understand Claude\'s limitations, and feel confident that AI is a tool, not a threat. Check: are your prompts noticeably better than when you started?', quiz:'Quiz after Chapter 8 tests your ability to spot unreliable AI output.'},
-      {phase:'Chapters 10-13: Claude Code', goal:'You should have Claude Code installed, understand how the terminal works, and have built your first real project. Check: can you open Claude Code and give it a task without feeling lost?', quiz:'Quiz after Chapter 13 covers Claude Code basics.'},
-      {phase:'Chapters 14-20: Systems', goal:'You should have at least one automated workflow running, understand how to connect Claude to your tools, and know how to set up a 24/7 system. Check: is Claude doing something useful for you without being asked?', quiz:null},
-      {phase:'Chapters 21-26: Mastery', goal:'You should understand the full AI ecosystem, know where the technology is heading, and have a plan for how AI fits into your career and life going forward. Check: could you teach someone else how to use AI effectively?', quiz:null}
+      {phase:'Chapters 1-5: Foundation', check:'Can you explain AI to a friend in 30 seconds?'},
+      {phase:'Chapters 6-11: Becoming Effective', check:'Are your prompts noticeably better than when you started?'},
+      {phase:'Chapters 12-16: Claude Code', check:'Can you open Claude Code and give it a task without feeling lost?'},
+      {phase:'Chapters 17-19: Systems', check:'Is Claude doing something useful for you without being asked?'},
+      {phase:'Chapters 20-26: Mastery', check:'Could you teach someone else how to use AI effectively?'}
     ];
 
     var milestonesHtml = milestones.map(function(m) {
-      return '<div style="padding:10px 14px;background:#f8fafc;border-left:3px solid #6d28d9;border-radius:0 8px 8px 0;margin-bottom:8px;">' +
-        '<div style="font-weight:600;font-size:13.5px;color:#6d28d9;margin-bottom:4px;">' + m.phase + '</div>' +
-        '<div style="font-size:13px;color:#374151;margin-bottom:3px;">' + m.goal + '</div>' +
-        (m.quiz ? '<div style="font-size:12px;color:#6b7280;font-style:italic;">' + m.quiz + '</div>' : '') +
+      return '<div style="padding:8px 14px;background:var(--bg-code);border-left:3px solid var(--purple);border-radius:0 8px 8px 0;margin-bottom:6px;">' +
+        '<span style="font-weight:600;font-size:13px;color:var(--purple-dark);">' + m.phase + '</span>' +
+        '<span style="font-size:12.5px;color:var(--text-secondary);margin-left:8px;">' + m.check + '</span>' +
         '</div>';
     }).join('');
 
+    // Dynamic personalized intro
+    var dynamicIntro = getDynamicIntro(profile);
+
     var body = document.getElementById('dash-body');
     body.innerHTML =
-      '<p style="margin-bottom:12px;">' + (name !== 'there' ? '<strong>Hi ' + name + '.</strong> ' : '') + tips.intro + '</p>' +
-      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;font-size:13px;"><span style="background:#e8f0fe;color:#1a56db;padding:3px 10px;border-radius:6px;">' + (roles || 'Explorer') + '</span><span style="background:#f0fdf4;color:#166534;padding:3px 10px;border-radius:6px;">' + expLabel + '</span></div>' +
-      '<div style="margin-bottom:16px;"><strong style="font-size:14px;">Tips for you:</strong><ul style="margin-top:6px;padding-left:18px;font-size:13.5px;color:#374151;">' + tipsHtml + '</ul></div>' +
-      '<div style="margin-bottom:16px;"><strong style="font-size:14px;">How to go through this guide:</strong><p style="font-size:13.5px;color:#374151;margin-top:4px;">' + tips.howTo + '</p></div>' +
-      '<div style="margin-bottom:16px;"><strong style="font-size:14px;">What to expect (milestones and self-checks):</strong><p style="font-size:13px;color:#6b7280;margin-top:4px;margin-bottom:10px;">Use these checkpoints to make sure you are actually learning, not just reading. After each phase, pause and honestly ask yourself the check-in questions. If something is unclear, go back. There is no rush.</p>' + milestonesHtml + '</div>' +
-      '<div style="margin-bottom:16px;"><strong style="font-size:14px;">Always-on tools inside this guide:</strong><p style="font-size:13px;color:#6b7280;margin-top:4px;margin-bottom:8px;">These are built into the guide and available anytime, not just during a chapter.</p>' +
-      '<div style="display:flex;flex-wrap:wrap;gap:8px;">' +
+      '<div style="margin-bottom:16px;">' + (name !== 'there' ? '<p style="font-size:1.1em;font-weight:700;margin-bottom:8px;">' + name + ', welcome to The AI Playbook.</p>' : '') + dynamicIntro.split('\n\n').map(function(p) { return '<p style="margin-bottom:8px;font-size:0.95em;color:#374151;line-height:1.5;">' + p + '</p>'; }).join('') + '</div>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;font-size:13px;">' +
+        '<span style="background:#e8f0fe;color:#1a56db;padding:3px 10px;border-radius:6px;">' + (roles || 'Explorer') + '</span>' +
+        '<span style="background:#f0fdf4;color:#166534;padding:3px 10px;border-radius:6px;">' + expLabel + '</span>' +
+      '</div>' +
+      '<div style="margin-bottom:14px;"><strong style="font-size:14px;">Tips for you:</strong><ul style="margin-top:4px;padding-left:18px;font-size:13px;color:#374151;">' + tipsHtml + '</ul></div>' +
+      '<div style="margin-bottom:14px;"><strong style="font-size:14px;">Self-check milestones:</strong>' + milestonesHtml + '</div>' +
+      '<div style="margin-bottom:14px;"><strong style="font-size:14px;">Tools:</strong>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;">' +
       '<a href="#prompt-builder" style="background:#f5f3ff;color:#6d28d9;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;cursor:pointer;">Prompt Builder</a>' +
       '<a href="#roi-calculator" style="background:#f5f3ff;color:#6d28d9;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;cursor:pointer;">ROI Calculator</a>' +
-      '<a onclick="document.getElementById(\'ai-panel\').classList.add(\'open\');document.getElementById(\'ai-input\').focus();" style="background:#f5f3ff;color:#6d28d9;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;cursor:pointer;">AI Assistant (ask anything)</a>' +
-      '<a href="#appendix-b" style="background:#f5f3ff;color:#6d28d9;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;cursor:pointer;">Prompt Template Library</a>' +
-      '<a href="#appendix-a" style="background:#f5f3ff;color:#6d28d9;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;cursor:pointer;">Troubleshooting Guide</a>' +
-      '<a href="#ch23" style="background:#f5f3ff;color:#6d28d9;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;cursor:pointer;">AI Tool Ecosystem Reference</a>' +
+      '<a href="#power-tricks-library" style="background:#f5f3ff;color:#6d28d9;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;cursor:pointer;">Power Tricks Library</a>' +
+      '<a onclick="document.getElementById(\'ai-panel\').classList.add(\'open\');document.getElementById(\'ai-input\').focus();" style="background:#f5f3ff;color:#6d28d9;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;cursor:pointer;">AI Assistant</a>' +
+      '<a href="#appendix-b" style="background:#f5f3ff;color:#6d28d9;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;cursor:pointer;">Prompt Templates</a>' +
       '<a href="#glossary" style="background:#f5f3ff;color:#6d28d9;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;cursor:pointer;">Glossary</a>' +
       '<a onclick="document.getElementById(\'search-overlay\').classList.add(\'visible\');document.getElementById(\'search-input\').focus();" style="background:#f5f3ff;color:#6d28d9;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;cursor:pointer;">Search (Cmd+K)</a>' +
       '</div></div>' +
@@ -5070,8 +6168,18 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
       }
     });
 
-    // Require at least 40% of meaningful words to match
-    if (totalPossible > 0 && score / (totalPossible * 3) < 0.3) return 0;
+    // Require at least 40% of meaningful words to match the QUESTION text
+    var qMatchCount = 0;
+    qWords.forEach(function(w) {
+      var allForms = expandWithSynonyms(w);
+      for (var i = 0; i < allForms.length; i++) {
+        if (qText.indexOf(allForms[i]) !== -1) { qMatchCount++; break; }
+      }
+    });
+    // If less than half the query words match the question, heavily penalize
+    if (totalPossible > 1 && qMatchCount < totalPossible * 0.4) score = score * 0.2;
+    // Bonus for matching ALL query words in the question
+    if (qMatchCount === totalPossible && totalPossible > 1) score = score * 2;
 
     return score;
   }
@@ -5128,9 +6236,27 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
     aiInput.value = '';
 
     var answer = answerAI(q);
+    var shouldPackage = false;
+    var wordCount = q.split(/\s+/).length;
+    if (wordCount > 15) {
+      var topScore = 0;
+      AI_QA.forEach(function(item) {
+        var s = scoreMatch(q, item);
+        if (s > topScore) topScore = s;
+      });
+      if (topScore < 8) shouldPackage = true;
+    }
+
     var botMsg = document.createElement('div');
     botMsg.className = 'ai-msg bot';
-    botMsg.innerHTML = answer.replace(/\n/g, '<br>');
+    if (shouldPackage && typeof packagePrompt === 'function') {
+      var packaged = packagePrompt(q);
+      botMsg.innerHTML = 'It looks like you are describing a task. Here is a stronger, structured version:<div class="prompt-package-box"><span class="pp-prompt-text">' +
+        packaged.replace(/</g,'&lt;').replace(/\n/g,'<br>') +
+        '</span><br><button class="pp-copy-btn" onclick="navigator.clipboard.writeText(this.parentElement.querySelector(\'.pp-prompt-text\').textContent);this.textContent=\'Copied!\';setTimeout(()=>this.textContent=\'Copy Prompt\',2000)">Copy Prompt</button></div>';
+    } else {
+      botMsg.innerHTML = answer.replace(/\n/g, '<br>');
+    }
     aiMessages.appendChild(botMsg);
     aiMessages.scrollTop = aiMessages.scrollHeight;
   }
@@ -5157,10 +6283,11 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
   document.addEventListener('keydown', function(e) {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
     if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); openSearch(); }
-    if (e.key === 'Escape') { closeSearch(); shortcutsModal.classList.remove('visible'); aiPanel.classList.remove('open'); }
+    if (e.key === 'Escape') { closeSearch(); shortcutsModal.classList.remove('visible'); aiPanel.classList.remove('open'); var rp = document.getElementById('right-panel'); if (rp.classList.contains('open') && window.innerWidth < 1024) toggleRightPanel(); }
     if (e.key === 'd' || e.key === 'D') { if (!e.metaKey && !e.ctrlKey) toggleDarkMode(); }
     if (e.key === '?') shortcutsModal.classList.add('visible');
     if (e.key === '[') toggleSidebar();
+    if (e.key === ']') toggleRightPanel();
     if (e.key === '+' || e.key === '=') changeFontSize(1);
     if (e.key === '-') changeFontSize(-1);
   });
@@ -5168,10 +6295,10 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
   // ==================== ONBOARDING WIZARD ====================
   var onboardingOverlay = document.getElementById('onboarding-overlay');
   var onboardingCard = document.getElementById('onboarding-card');
-  var wizardState = { step: 1, name: '', personas: [], experience: null, goal: null, otherText: '' };
+  var wizardState = { step: 1, name: '', personas: [], experience: null, goals: [], otherText: '' };
 
   function showOnboarding() {
-    wizardState = { step: 1, name: '', personas: [], experience: null, goal: null, otherText: '' };
+    wizardState = { step: 1, name: '', personas: [], experience: null, goals: [], otherText: '' };
     onboardingOverlay.classList.remove('hidden');
     requestAnimationFrame(function() { onboardingOverlay.classList.add('visible'); });
     renderWizardStep();
@@ -5222,27 +6349,28 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
         break;
       case 4:
         html = '<div class="step-indicator">Step 4 of 5</div>' +
-          '<h2>What is your #1 goal?</h2>' +
+          '<h2>What do you want to use AI for?</h2>' +
+          '<p style="font-size:14px;color:#6b7280;margin-bottom:16px;">Select all that apply.</p>' +
           '<div class="onboarding-options" id="goal-options">' +
-          makeRadio('goal', 'save-time', 'Save time on repetitive tasks') +
-          makeRadio('goal', 'build', 'Build something (website, app, tool)') +
-          makeRadio('goal', 'job', 'Get better at my job') +
-          makeRadio('goal', 'automate', 'Automate parts of my life') +
-          makeRadio('goal', 'learn', 'Learn and grow') +
-          makeRadio('goal', 'money', 'Make money') +
+          makeCheck('goals', 'save-time', 'Save time on repetitive tasks') +
+          makeCheck('goals', 'build', 'Build something (website, app, tool)') +
+          makeCheck('goals', 'job', 'Get better at my job') +
+          makeCheck('goals', 'automate', 'Automate parts of my life') +
+          makeCheck('goals', 'learn', 'Learn and grow') +
+          makeCheck('goals', 'money', 'Make money') +
           '</div>' +
-          '<button class="onboarding-btn" id="wizard-next-4" disabled onclick="window._wizardNext()">See My Path</button>';
+          '<button class="onboarding-btn" id="wizard-next-4" onclick="window._wizardNext()">See My Path</button>';
         break;
       case 5:
         var roles = wizardState.personas.map(function(p) { return PERSONA_LABELS[p] || p; }).join(', ');
-        var goalLabel = GOAL_LABELS[wizardState.goal] || wizardState.goal;
+        var goalLabel = wizardState.goals.map(function(g) { return GOAL_LABELS[g] || g; }).join(', ') || 'Not set';
         var personaKey = wizardState.personas[0] || 'other';
         var map = PERSONA_MAP[personaKey] || PERSONA_MAP['other'];
         html = '<h2>Your personalized path is ready</h2>' +
           '<div class="onboarding-summary">' +
           (wizardState.name ? '<strong>Name:</strong> ' + wizardState.name + '<br>' : '') +
           '<strong>Roles:</strong> ' + (roles || 'Not set') + '<br>' +
-          '<strong>Goal:</strong> ' + goalLabel + '<br>' +
+          '<strong>Goals:</strong> ' + goalLabel + '<br>' +
           '<strong>Essential chapters:</strong> ' + map.essential.length + '<br>' +
           '<strong>Recommended:</strong> ' + map.recommended.length +
           '</div>' +
@@ -5267,11 +6395,17 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
     var checkboxes = onboardingCard.querySelectorAll('input[type="checkbox"]');
     checkboxes.forEach(function(cb) {
       cb.addEventListener('change', function() {
+        var group = cb.name;
+        var arr = group === 'goals' ? wizardState.goals : wizardState.personas;
         if (cb.checked) {
-          if (wizardState.personas.indexOf(cb.value) === -1) wizardState.personas.push(cb.value);
+          if (arr.indexOf(cb.value) === -1) arr.push(cb.value);
           cb.closest('label').classList.add('selected');
         } else {
-          wizardState.personas = wizardState.personas.filter(function(p) { return p !== cb.value; });
+          if (group === 'goals') {
+            wizardState.goals = wizardState.goals.filter(function(g) { return g !== cb.value; });
+          } else {
+            wizardState.personas = wizardState.personas.filter(function(p) { return p !== cb.value; });
+          }
           cb.closest('label').classList.remove('selected');
         }
         var otherWrap = document.getElementById('other-text-wrap');
@@ -5313,13 +6447,16 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
       name: wizardState.name,
       personas: wizardState.personas,
       experience: wizardState.experience,
-      goal: wizardState.goal,
+      goals: wizardState.goals,
+      goal: wizardState.goals[0] || null,
       otherText: wizardState.otherText
     });
     hideOnboarding();
     buildSidebar();
     updatePersonaCallouts();
     updateDashboard();
+    updateGetAheadSection();
+    updateNotesBookmarksTab();
     if (window.innerWidth >= 900 && !sidebar.classList.contains('open')) toggleSidebar();
   };
 
@@ -5370,6 +6507,7 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
           saveNotes(allNotes);
           btn.textContent = ta.value ? 'Edit note' : '+ Note';
           noteDiv.remove();
+          updateNotesBookmarksTab();
         });
         var delBtn = document.createElement('button');
         delBtn.textContent = 'Delete';
@@ -5379,6 +6517,7 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
           saveNotes(allNotes);
           btn.textContent = '+ Note';
           noteDiv.remove();
+          updateNotesBookmarksTab();
         });
         actions.appendChild(saveBtn);
         actions.appendChild(delBtn);
@@ -5549,12 +6688,22 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
 
   // ==================== PROMPT BUILDER ====================
   var PB_TASKS = {
-    email: ['Respond to a client email', 'Write a cold outreach email', 'Follow up on a proposal', 'Apologize for a mistake', 'Request a meeting', 'Write a thank-you email', 'Negotiate terms', 'Introduce yourself'],
-    content: ['Write a blog post', 'Create social media posts', 'Write a product description', 'Create a newsletter', 'Write ad copy', 'Write a case study', 'Create a landing page', 'Write a press release'],
-    research: ['Summarize a topic', 'Compare options', 'Analyze a market', 'Review a document', 'Investigate a question', 'Literature review', 'Competitive analysis', 'Trend report'],
-    analysis: ['Analyze sales data', 'Review financial reports', 'Evaluate a business idea', 'Assess competition', 'Identify trends', 'SWOT analysis', 'Cost-benefit analysis', 'Risk assessment'],
-    personal: ['Plan a meal', 'Plan an event', 'Understand a document', 'Make a decision', 'Learn a new skill', 'Write a letter', 'Plan a trip', 'Create a budget'],
-    career: ['Tailor my resume', 'Write a cover letter', 'Prepare for an interview', 'Negotiate salary', 'Create a portfolio', 'Write a LinkedIn summary', 'Plan a career transition']
+    email: ['Respond to a client email', 'Write a cold outreach email', 'Follow up on a proposal', 'Apologize for a mistake', 'Request a meeting', 'Write a thank-you email', 'Negotiate terms via email', 'Introduce yourself to a new contact'],
+    content: ['Write a blog post', 'Create social media posts (week)', 'Write a product description', 'Create an email newsletter', 'Write a case study', 'Create a landing page', 'Write a press release', 'Build a content calendar'],
+    research: ['Summarize a topic', 'Compare multiple options', 'Analyze a market opportunity', 'Review and summarize a document', 'Investigate a question deeply', 'Literature review', 'Competitive analysis', 'Trend report'],
+    analysis: ['Analyze sales data', 'Review financial reports', 'Evaluate a business idea', 'Assess competition', 'Identify trends in data', 'SWOT analysis', 'Cost-benefit analysis', 'Risk assessment'],
+    business: ['Write a business proposal', 'Create standard operating procedures', 'Draft an invoice template', 'Write a contract outline', 'Create a project plan', 'Build a customer onboarding guide', 'Write a partnership pitch', 'Create a pricing strategy'],
+    education: ['Create a lesson plan', 'Build a study guide', 'Explain a complex topic simply', 'Generate practice questions', 'Create a rubric', 'Write a course outline', 'Differentiate materials by level', 'Create flashcard content'],
+    creative: ['Brainstorm story ideas', 'Write a short story opening', 'Create character profiles', 'Write a script or dialogue', 'Generate creative concepts', 'Write poetry or lyrics', 'Build a worldbuilding document', 'Create a brainstorming session'],
+    code: ['Build a website', 'Write a Python script', 'Debug an error', 'Create an automation', 'Design a database schema', 'Write an API integration', 'Create a browser extension', 'Build a dashboard'],
+    health: ['Create a weekly meal plan', 'Design a workout routine', 'Research a health topic', 'Build a supplement plan', 'Create a sleep optimization plan', 'Plan healthy meal prep', 'Design a 30-day challenge', 'Understand a medical report'],
+    finance: ['Create a monthly budget', 'Analyze spending patterns', 'Compare financial products', 'Plan for a major purchase', 'Create a savings plan', 'Understand an investment option', 'Prepare tax-related questions', 'Build a debt payoff plan'],
+    legal: ['Review a lease agreement', 'Draft a basic contract', 'Understand a legal document', 'Write a cease and desist letter', 'Create a privacy policy', 'Draft terms of service', 'Summarize regulations', 'Prepare questions for a lawyer'],
+    career: ['Tailor my resume for a role', 'Write a cover letter', 'Prepare for an interview', 'Negotiate salary', 'Write a LinkedIn summary', 'Plan a career transition', 'Build a professional portfolio', 'Prepare a performance review self-assessment'],
+    home: ['Plan a vacation', 'Plan an event or party', 'Create a home project plan', 'Organize a move', 'Research a major purchase', 'Plan a weekly routine', 'Create a packing list', 'Compare service providers'],
+    customerservice: ['Write a response template', 'Handle a customer complaint', 'Create an FAQ page', 'Write an apology to a customer', 'Build a customer feedback survey', 'Create a return/refund policy', 'Write a follow-up sequence', 'Draft an escalation procedure'],
+    marketing: ['Write ad copy', 'Create an SEO content plan', 'Build a campaign strategy', 'Write competitor analysis', 'Create email marketing sequence', 'Write social media ad variations', 'Build a brand voice guide', 'Create a launch plan'],
+    data: ['Write a spreadsheet formula', 'Analyze a CSV dataset', 'Create a data visualization plan', 'Build a reporting template', 'Clean and organize data', 'Create a survey and analyze results', 'Build a KPI dashboard plan', 'Write a data summary report']
   };
 
   window.updatePBTasks = function() {
@@ -5572,6 +6721,7 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
 
   window.buildPrompt = function() {
     var task = document.getElementById('pb-task').value;
+    var category = document.getElementById('pb-category').value;
     var context = document.getElementById('pb-context').value;
     var audience = document.getElementById('pb-audience').value;
     var tone = document.getElementById('pb-tone').value;
@@ -5584,6 +6734,26 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
     var errorcheck = document.getElementById('pb-errorcheck').checked;
 
     if (!task) { alert('Please select a task.'); return; }
+
+    // Category-specific quality instructions
+    var categoryBoosts = {
+      email: 'Write a subject line that gets opened. Keep paragraphs short (2-3 sentences max). End with a clear call to action. Do not start with "I hope this email finds you well" or any generic opener.',
+      content: 'Write a compelling hook in the first line. Use specific details and examples, not generic statements. Optimize for the target platform. Include a call to action.',
+      research: 'Cite specific data points, dates, and sources where possible. Distinguish between facts and opinions. Note any gaps in the available information. Organize findings by relevance, not chronology.',
+      analysis: 'Start with the key finding or recommendation. Support every conclusion with data. Quantify impacts where possible. End with specific, actionable next steps.',
+      business: 'Use clear, professional language. Include all necessary sections and details a real business would need. Make it ready to use, not a template with brackets. Be specific about numbers, timelines, and deliverables.',
+      education: 'Align to specific learning objectives. Include differentiation options for different levels. Add assessment checkpoints. Make instructions clear enough that another teacher could use them.',
+      creative: 'Show, do not tell. Use vivid sensory details. Create tension or intrigue early. Avoid cliches and predictable plot points. Give characters distinct voices.',
+      code: 'Write clean, commented code. Handle edge cases and errors. Include usage examples. Explain design decisions. Make it production-ready, not a toy example.',
+      health: 'Include specific quantities, durations, and frequencies. Organize by day or week for easy following. Note important safety considerations. Adapt to the stated fitness level or dietary needs.',
+      finance: 'Use specific dollar amounts where applicable. Include both short-term and long-term perspectives. Show the math behind recommendations. Account for taxes and fees where relevant.',
+      legal: 'Use clear, precise language. Note that this is for informational purposes and not legal advice. Include all standard clauses that would appear in a real document. Flag areas where professional legal review is recommended.',
+      career: 'Use strong action verbs. Quantify achievements where possible. Tailor language to match the target role or company. Be specific, not generic. Show impact, not just duties.',
+      home: 'Include specific dates, times, and budgets. Organize chronologically or by priority. Include contingency plans. Make it actionable enough to follow without additional research.',
+      customerservice: 'Acknowledge the customer emotion first. Provide a clear resolution path. Maintain professionalism without sounding robotic. Include escalation procedures where appropriate.',
+      marketing: 'Lead with the benefit, not the feature. Use language the target audience actually uses. Include specific metrics or goals. Test multiple angles or variations.',
+      data: 'Show the formula or method step by step. Include sample data to demonstrate. Handle common edge cases. Explain what the output means in plain language.'
+    };
 
     var prompt = '';
 
@@ -5604,6 +6774,11 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
     if (industry) prompt += '- Industry context: ' + industry + '\n';
     if (constraints) prompt += '- Constraints: ' + constraints + '\n';
     if (avoid) prompt += '- Avoid: ' + avoid + '\n';
+
+    // Category-specific quality boost
+    if (category && categoryBoosts[category]) {
+      prompt += '\n## Quality Standards\n' + categoryBoosts[category] + '\n';
+    }
 
     // Example section
     if (example) {
@@ -5685,6 +6860,851 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
   }
   window.addEventListener('scroll', updateActiveChapter, { passive: true });
 
+  // ==================== BOOKMARKS SYSTEM ====================
+  var BOOKMARKS_KEY = 'claude-mastery-bookmarks';
+  var HIGHLIGHTS_KEY = 'claude-mastery-highlights';
+
+  function getBookmarks() {
+    try { return JSON.parse(localStorage.getItem(BOOKMARKS_KEY)) || []; } catch(e) { return []; }
+  }
+  function saveBookmarks(b) { localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(b)); }
+
+  function addBookmarkButtons() {
+    var bookmarks = getBookmarks();
+    document.querySelectorAll('h2[id]').forEach(function(h2) {
+      if (h2.querySelector('.bookmark-btn')) return;
+      var chId = h2.id;
+      var btn = document.createElement('span');
+      btn.className = 'bookmark-btn';
+      var isBookmarked = bookmarks.indexOf(chId) !== -1;
+      btn.textContent = isBookmarked ? 'Bookmarked' : 'Bookmark';
+      if (isBookmarked) btn.classList.add('bookmarked');
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var bm = getBookmarks();
+        var idx = bm.indexOf(chId);
+        if (idx !== -1) {
+          bm.splice(idx, 1);
+          btn.textContent = 'Bookmark';
+          btn.classList.remove('bookmarked');
+        } else {
+          bm.push(chId);
+          btn.textContent = 'Bookmarked';
+          btn.classList.add('bookmarked');
+        }
+        saveBookmarks(bm);
+        updateBookmarksTab();
+        updateNotesBookmarksTab();
+        if (typeof updateRPanelBookmarks === 'function') updateRPanelBookmarks();
+      });
+      h2.appendChild(btn);
+    });
+  }
+
+  function updateBookmarksTab() {
+    var container = document.getElementById('sidebar-bookmarks-list');
+    var bookmarks = getBookmarks();
+    if (bookmarks.length === 0) {
+      container.innerHTML = '<div class="sb-empty">No bookmarks yet. Click the flag icon on any chapter heading to bookmark it.</div>';
+      return;
+    }
+    container.innerHTML = '';
+    bookmarks.forEach(function(chId) {
+      var ch = CHAPTERS.find(function(c) { return c.id === chId; });
+      var h2 = document.getElementById(chId);
+      var title = ch ? ch.title : (h2 ? h2.textContent.replace('Share','').replace('Bookmark','').replace('Bookmarked','').trim() : chId);
+      var item = document.createElement('div');
+      item.className = 'sb-item';
+      var a = document.createElement('a');
+      a.href = '#' + chId;
+      a.textContent = title;
+      a.addEventListener('click', function() { if (window.innerWidth < 900) toggleSidebar(); });
+      var removeBtn = document.createElement('button');
+      removeBtn.className = 'sb-remove';
+      removeBtn.textContent = 'Remove';
+      removeBtn.addEventListener('click', function() {
+        var bm = getBookmarks();
+        var idx = bm.indexOf(chId);
+        if (idx !== -1) bm.splice(idx, 1);
+        saveBookmarks(bm);
+        updateBookmarksTab();
+        updateNotesBookmarksTab();
+        var bmBtn = document.querySelector('h2#' + chId + ' .bookmark-btn');
+        if (bmBtn) { bmBtn.textContent = 'Bookmark'; bmBtn.classList.remove('bookmarked'); }
+      });
+      item.appendChild(a);
+      item.appendChild(removeBtn);
+      container.appendChild(item);
+    });
+  }
+
+  function updateNotesBookmarksTab() {
+    var container = document.getElementById('sidebar-notes-bookmarks-list');
+    var bookmarks = getBookmarks();
+    var notes = getNotes();
+    var noteKeys = Object.keys(notes).filter(function(k) { return notes[k]; });
+    if (bookmarks.length === 0 && noteKeys.length === 0) {
+      container.innerHTML = '<div class="snb-empty">No notes or bookmarks yet.</div>';
+      return;
+    }
+    container.innerHTML = '';
+    if (bookmarks.length > 0) {
+      var bTitle = document.createElement('div');
+      bTitle.style.cssText = 'font-weight:700;font-size:0.85em;color:var(--text-muted);padding:8px 0 4px;text-transform:uppercase;letter-spacing:0.5px;';
+      bTitle.textContent = 'Bookmarks';
+      container.appendChild(bTitle);
+      bookmarks.forEach(function(chId) {
+        var ch = CHAPTERS.find(function(c) { return c.id === chId; });
+        var h2 = document.getElementById(chId);
+        var title = ch ? ch.title : (h2 ? h2.textContent.replace('Share','').replace('Bookmark','').replace('Bookmarked','').trim() : chId);
+        var item = document.createElement('div');
+        item.className = 'snb-item';
+        var a = document.createElement('a');
+        a.href = '#' + chId;
+        a.textContent = title;
+        a.addEventListener('click', function() { if (window.innerWidth < 900) toggleSidebar(); });
+        item.appendChild(a);
+        container.appendChild(item);
+      });
+    }
+    if (noteKeys.length > 0) {
+      var nTitle = document.createElement('div');
+      nTitle.style.cssText = 'font-weight:700;font-size:0.85em;color:var(--text-muted);padding:12px 0 4px;text-transform:uppercase;letter-spacing:0.5px;';
+      nTitle.textContent = 'Notes';
+      container.appendChild(nTitle);
+      var h3s = document.querySelectorAll('h3');
+      noteKeys.forEach(function(noteId) {
+        var idx = parseInt(noteId.replace('note-',''));
+        var h3 = h3s[idx];
+        if (!h3) return;
+        var item = document.createElement('div');
+        item.className = 'snb-item';
+        var a = document.createElement('a');
+        a.href = 'javascript:void(0)';
+        a.textContent = h3.textContent.replace('+ Note','').replace('Edit note','').trim();
+        a.addEventListener('click', function() {
+          h3.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          if (window.innerWidth < 900) toggleSidebar();
+        });
+        item.appendChild(a);
+        container.appendChild(item);
+      });
+    }
+  }
+
+  // ==================== SIDEBAR TABS ====================
+  function initSidebarTabs() {
+    var tabs = document.querySelectorAll('.sidebar-tabs button');
+    tabs.forEach(function(tab) {
+      tab.addEventListener('click', function() {
+        tabs.forEach(function(t) { t.classList.remove('active'); });
+        tab.classList.add('active');
+        document.querySelectorAll('.sidebar-tab-content').forEach(function(tc) { tc.classList.remove('active'); });
+        document.getElementById('sidebar-tab-' + tab.getAttribute('data-tab')).classList.add('active');
+      });
+    });
+  }
+
+  // ==================== TEXT HIGHLIGHTING AND MARGIN NOTES ====================
+  function getHighlights() {
+    try { return JSON.parse(localStorage.getItem(HIGHLIGHTS_KEY)) || []; } catch(e) { return []; }
+  }
+  function saveHighlights(h) { localStorage.setItem(HIGHLIGHTS_KEY, JSON.stringify(h)); }
+
+  function initTextHighlighting() {
+    var tooltip = null;
+
+    document.addEventListener('mouseup', function(e) {
+      if (tooltip) { tooltip.remove(); tooltip = null; }
+      var sel = window.getSelection();
+      if (!sel || sel.isCollapsed || sel.toString().trim().length < 3) return;
+      var range = sel.getRangeAt(0);
+      var container = range.commonAncestorContainer;
+      if (container.nodeType === 3) container = container.parentElement;
+      if (container.closest('#guide-sidebar') || container.closest('#ai-panel') || container.closest('#onboarding-overlay') || container.closest('#search-overlay') || container.closest('.no-print')) return;
+
+      var rect = range.getBoundingClientRect();
+      tooltip = document.createElement('div');
+      tooltip.className = 'highlight-tooltip no-print';
+      tooltip.textContent = 'Add Note';
+      tooltip.style.left = (rect.left + rect.width / 2 - 40 + window.scrollX) + 'px';
+      tooltip.style.top = (rect.top - 36 + window.scrollY) + 'px';
+      tooltip.addEventListener('mousedown', function(ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        var selectedText = sel.toString().trim();
+        var note = prompt('Add a note for this highlight (or leave blank for just a highlight):');
+        if (note === null) { tooltip.remove(); tooltip = null; return; }
+        var highlights = getHighlights();
+        var h2Parent = container.closest ? container.closest('h2[id], [id]') : null;
+        var nearestId = '';
+        if (h2Parent) nearestId = h2Parent.id;
+        highlights.push({ text: selectedText.substring(0, 200), note: note, sectionId: nearestId, timestamp: Date.now() });
+        saveHighlights(highlights);
+        try {
+          var mark = document.createElement('mark');
+          mark.className = 'text-highlight';
+          mark.title = note || 'Highlighted';
+          range.surroundContents(mark);
+          if (note) {
+            var dot = document.createElement('span');
+            dot.className = 'margin-note-indicator';
+            dot.title = note;
+            dot.addEventListener('click', function() {
+              var existing = dot.parentElement.querySelector('.margin-note-popup');
+              if (existing) { existing.remove(); return; }
+              var popup = document.createElement('div');
+              popup.className = 'margin-note-popup no-print';
+              popup.innerHTML = '<div style="font-size:0.85em;color:var(--text-muted);margin-bottom:6px;">Your note:</div><div style="color:var(--text);">' + note.replace(/</g,'&lt;') + '</div>';
+              var closeBtn = document.createElement('button');
+              closeBtn.textContent = 'Close';
+              closeBtn.style.cssText = 'margin-top:8px;font-size:0.8em;padding:2px 8px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text-muted);cursor:pointer;';
+              closeBtn.addEventListener('click', function() { popup.remove(); });
+              popup.appendChild(closeBtn);
+              mark.style.position = 'relative';
+              mark.appendChild(popup);
+            });
+            mark.appendChild(dot);
+          }
+        } catch(err) {
+          // Range may cross elements, just save to localStorage
+        }
+        sel.removeAllRanges();
+        tooltip.remove();
+        tooltip = null;
+        updateNotesBookmarksTab();
+      });
+      document.body.appendChild(tooltip);
+    });
+
+    document.addEventListener('mousedown', function(e) {
+      if (tooltip && !tooltip.contains(e.target)) { tooltip.remove(); tooltip = null; }
+    });
+  }
+
+  // ==================== CAREER INPUT (Ch24) ====================
+  var CAREER_DATA = {
+    teacher: { title: 'Teacher / Educator', impact: 'AI is already reshaping lesson planning, grading, and differentiated instruction. Teachers who use AI effectively can serve more students better, not fewer. The role is not going away, but teachers who refuse to adapt will struggle to keep up with those who embrace it.', uses: ['Create differentiated lesson plans for students at different levels in minutes instead of hours','Generate parent communications in multiple languages instantly','Build assessment rubrics, study guides, and practice tests aligned to specific standards'], skills: ['Prompt engineering for educational content','Understanding AI ethics to teach students responsible use','Building AI-assisted workflows for grading and feedback'] },
+    nurse: { title: 'Nurse / Healthcare Worker', impact: 'AI is transforming documentation, patient communication, and continuing education. Nurses who learn AI tools will spend less time on paperwork and more time on patient care. The human element of healthcare cannot be replaced, but the administrative burden can be reduced.', uses: ['Summarize research papers and CE materials quickly','Draft documentation, handoff notes, and care plans more efficiently','Prepare for certifications with AI-powered study tools and practice questions'], skills: ['AI literacy for evaluating health-related AI claims','Privacy-aware AI use (never putting patient data into AI tools)','Using AI for professional development and staying current'] },
+    lawyer: { title: 'Lawyer / Legal Professional', impact: 'Contract review, legal research, and document drafting are increasingly AI-assisted. Lawyers who use AI effectively can handle more cases and deliver faster results. The legal profession is one of the most AI-impacted white-collar fields.', uses: ['Accelerate contract review and legal research by having AI summarize key clauses and flag issues','Draft initial versions of briefs, memos, and client correspondence','Organize and summarize large document sets during discovery'], skills: ['Critical evaluation of AI-generated legal text','Understanding AI limitations around legal advice','Building client-facing AI workflows while maintaining confidentiality'] },
+    realtor: { title: 'Real Estate Agent', impact: 'AI is changing how properties are marketed, how clients are communicated with, and how market analysis is done. Agents who use AI can handle more listings and provide better service without burning out.', uses: ['Write listing descriptions, market analyses, and client emails in your brand voice in minutes','Generate social media content and marketing materials at scale','Create buyer consultation scripts and automated follow-up sequences'], skills: ['Training AI on your brand voice and market expertise','Building automated client communication systems','Using AI for market analysis and pricing research'] },
+    accountant: { title: 'Accountant / Financial Professional', impact: 'Routine data entry, reconciliation, and report generation are being automated. Accountants who combine domain expertise with AI skills become strategic advisors, not just number processors.', uses: ['Analyze financial reports and identify anomalies faster','Draft client communications and tax planning summaries','Automate routine data entry and reconciliation tasks'], skills: ['AI-assisted data analysis and pattern recognition','Building automated reporting workflows','Understanding AI limitations around financial accuracy'] },
+    designer: { title: 'Graphic Designer / Creative', impact: 'AI is not replacing designers. It is removing the tedious parts: writing proposals, handling client admin, generating initial concepts. Designers who use AI handle more clients and focus on the creative work that matters.', uses: ['Generate initial concept descriptions and creative briefs from client requirements','Write client proposals, project scopes, and invoices quickly','Build portfolio websites and social media content to attract new clients'], skills: ['Using AI image tools alongside traditional design skills','Building AI-assisted creative workflows','Training AI on your brand style for consistent outputs'] },
+    marketer: { title: 'Marketer / Marketing Professional', impact: 'AI is transforming content creation, audience analysis, and campaign optimization. Marketers who use AI effectively produce more content, analyze faster, and run better campaigns. This is one of the fields where AI skills provide the clearest competitive advantage.', uses: ['Generate content calendars, social media posts, and email campaigns at scale','Analyze audience data and campaign performance for actionable insights','Create A/B test variations and personalized messaging quickly'], skills: ['Prompt engineering for brand-consistent content','AI-assisted analytics and reporting','Building automated content pipelines'] },
+    developer: { title: 'Software Developer', impact: 'AI is already writing, reviewing, and debugging code. Developers who use AI-assisted coding tools are significantly more productive. The skill shifts from writing every line to directing, reviewing, and architecting.', uses: ['Use Claude Code to scaffold projects, write tests, and fix bugs faster','Generate documentation, API specs, and code reviews automatically','Build prototypes and MVPs in hours instead of days'], skills: ['Effective AI prompting for code generation','Reviewing and verifying AI-generated code','Architecture and system design (AI handles implementation)'] },
+    restaurant: { title: 'Restaurant / Food Service Owner', impact: 'AI is changing how restaurants handle menus, marketing, reviews, supplier relationships, and staff training. Restaurant owners who use AI tools handle the business side faster and focus more on the food and the experience. The restaurant itself cannot be replaced by AI, but the paperwork can.', uses: ['Write compelling menu descriptions, seasonal specials, and wine pairing notes that match your brand voice','Respond to Google and Yelp reviews professionally without sounding defensive or generic','Create employee training manuals, opening/closing checklists, and operational procedures in minutes'], skills: ['Prompt engineering for your restaurant brand voice','Using AI to analyze sales data and identify top-performing menu items','Building automated marketing workflows for email and social media'] },
+    manager: { title: 'Manager / Team Lead', impact: 'AI is changing how teams communicate, how reports are generated, and how decisions are made. Managers who use AI become the most efficient leaders in their organizations and can focus on strategy instead of admin.', uses: ['Generate meeting agendas, action items, and follow-up emails from notes','Create performance review frameworks and feedback templates','Build dashboards and reports for stakeholder presentations'], skills: ['AI workflow design for team productivity','Change management for AI adoption','Strategic thinking about where AI fits in your team operations'] }
+  };
+
+  window.generateCareerInsight = function() {
+    var input = document.getElementById('career-role-input').value.trim().toLowerCase();
+    if (!input) { alert('Please enter your career or role.'); return; }
+    var container = document.getElementById('career-result-container');
+    var match = null;
+    var keywords = {
+      teacher: ['teacher','teaching','educator','professor','instructor','tutor','principal','superintendent','dean','school'],
+      nurse: ['nurse','nursing','healthcare','medical','health care','rn','lpn','cna','paramedic','emt','therapist','physician'],
+      lawyer: ['lawyer','legal','attorney','paralegal','law','counsel'],
+      realtor: ['realtor','real estate','agent','broker','property'],
+      accountant: ['accountant','accounting','bookkeeper','cpa','tax','finance','financial'],
+      designer: ['designer','graphic','design','creative','artist','illustrator','ux','ui'],
+      marketer: ['marketer','marketing','seo','content','social media','advertising','brand','copywriter','pmm','product marketing'],
+      developer: ['developer','software','engineer','programmer','coding','coder','web dev','frontend','backend','full stack','devops'],
+      manager: ['manager','management','lead','director','supervisor','coordinator','vp','executive','ceo','coo','cfo'],
+      restaurant: ['restaurant','chef','cook','kitchen','food service','hospitality','bar','cafe','catering','bakery']
+    };
+    Object.keys(keywords).forEach(function(key) {
+      keywords[key].forEach(function(kw) {
+        if (input.indexOf(kw) !== -1) match = key;
+      });
+    });
+    var data = match ? CAREER_DATA[match] : null;
+    if (!data) {
+      data = {
+        title: input.charAt(0).toUpperCase() + input.slice(1),
+        impact: 'AI is impacting virtually every profession. Regardless of your specific role, the pattern is the same: repetitive tasks get automated, analytical tasks get augmented, and creative/strategic tasks become more valuable. People in your role who learn AI tools will produce more, earn more, and have more job security than those who do not.',
+        uses: ['Use Claude to draft communications, reports, and documentation specific to your role','Automate repetitive administrative tasks like data entry, scheduling, and status updates','Analyze information in your field faster by having AI summarize, compare, and identify patterns'],
+        skills: ['Prompt engineering tailored to your specific domain','Building AI-assisted workflows for your most time-consuming tasks','Critical evaluation of AI output in your area of expertise']
+      };
+    }
+    var html = '<div class="career-result">';
+    html += '<h4>How AI Impacts: ' + data.title + '</h4>';
+    html += '<p>' + data.impact + '</p>';
+    html += '<h4>3 Ways to Use AI in This Role Right Now</h4><ol>';
+    data.uses.forEach(function(u) { html += '<li>' + u + '</li>'; });
+    html += '</ol>';
+    html += '<h4>Skills to Develop to Stay Ahead</h4><ul>';
+    data.skills.forEach(function(s) { html += '<li>' + s + '</li>'; });
+    html += '</ul></div>';
+    container.innerHTML = html;
+
+    // Also save to profile for personalization
+    var profile = getProfile();
+    if (profile) {
+      profile.careerInput = input;
+      profile.careerMatch = match;
+      saveProfile(profile);
+      updateGetAheadSection();
+    }
+  };
+
+  // ==================== GET AHEAD PERSONALIZED CHAPTER ====================
+  function updateGetAheadSection() {
+    var profile = getProfile();
+    if (!profile) return;
+    var section = document.getElementById('get-ahead-personalized');
+    var content = document.getElementById('get-ahead-content');
+    if (!section || !content) return;
+    var personaKey = profile.personas && profile.personas[0] ? profile.personas[0] : null;
+    var goals = profile.goals || [];
+    if (!personaKey && goals.length === 0) return;
+    section.style.display = 'block';
+    var html = '';
+    if (personaKey === 'business') {
+      html += '<h4>For Business Owners</h4><ul>';
+      html += '<li><strong>Automate first.</strong> Identify the 3 tasks you or your team spend the most time on every week. Set up Claude workflows for each one. Start with email triage, report generation, and customer communication.</li>';
+      html += '<li><strong>Build a competitive moat.</strong> Most of your competitors are not using AI yet. The ones who are get faster proposals, better customer response times, and more consistent output. Be the one who adapts first.</li>';
+      html += '<li><strong>Efficiency compounds.</strong> Saving 5 hours a week is 260 hours a year. That is 6.5 full work weeks. Use those hours to grow your business, not just maintain it.</li>';
+      html += '</ul>';
+    } else if (personaKey === 'student') {
+      html += '<h4>For Students</h4><ul>';
+      html += '<li><strong>Build a portfolio now.</strong> Create AI-assisted projects you can show employers. A website, a data analysis, an automated workflow. These demonstrate skills that matter.</li>';
+      html += '<li><strong>Develop skills, not shortcuts.</strong> Use AI to learn harder material, not to skip learning. Have Claude explain concepts, quiz you, and create practice problems. The goal is understanding, not output.</li>';
+      html += '<li><strong>Stand out.</strong> When everyone in your class is submitting similar work, the student who uses AI to go deeper, research further, and present better is the one who gets noticed.</li>';
+      html += '</ul>';
+    } else if (personaKey === 'professional') {
+      html += '<h4>For Working Professionals</h4><ul>';
+      html += '<li><strong>Become the AI person on your team.</strong> Every team needs someone who understands AI tools. Be that person. Volunteer for AI-related projects, share useful prompts, and help colleagues get started.</li>';
+      html += '<li><strong>Upgrade your output.</strong> Better emails, faster reports, sharper analysis. AI does not replace your expertise. It amplifies it. The professional who produces A-grade work in half the time gets promoted.</li>';
+      html += '<li><strong>Document your AI skills.</strong> Add AI proficiency to your resume, LinkedIn, and performance reviews. It is a concrete, in-demand skill that differentiates you.</li>';
+      html += '</ul>';
+    } else if (personaKey === 'creative') {
+      html += '<h4>For Creatives</h4><ul>';
+      html += '<li><strong>Scale your output.</strong> AI handles the admin, proposals, invoicing, and client communication. You focus on the creative work that pays and fulfills you.</li>';
+      html += '<li><strong>Remove busywork.</strong> For every hour of creative work, most creatives spend 2-3 hours on non-creative tasks. Cut that ratio in half with AI-assisted workflows.</li>';
+      html += '<li><strong>Find more clients.</strong> Use AI to generate marketing content, build your online presence, and respond to inquiries faster. More visibility and faster response times mean more bookings.</li>';
+      html += '</ul>';
+    } else {
+      html += '<h4>Your Personalized Plan</h4><ul>';
+      html += '<li><strong>Start with your biggest time drain.</strong> Whatever task you spend the most time on each week, explore how AI can help. Even a 30% improvement there saves you hours.</li>';
+      html += '<li><strong>Build one workflow.</strong> Pick a repeating task and turn it into an AI-assisted system. Once you have one working, you will see opportunities everywhere.</li>';
+      html += '<li><strong>Stay curious.</strong> AI tools change monthly. The specific tool matters less than your willingness to experiment and adapt.</li>';
+      html += '</ul>';
+    }
+    if (goals.indexOf('save-time') !== -1) html += '<p><strong>Since you want to save time:</strong> Focus on Chapter 11 (Workflows) and Chapter 19 (Automating the Boring Stuff). These have the highest time-saving ROI.</p>';
+    if (goals.indexOf('build') !== -1) html += '<p><strong>Since you want to build something:</strong> Chapter 16 walks you through building your first real project. Chapter 22 has 10 power projects you can build this month.</p>';
+    if (goals.indexOf('money') !== -1) html += '<p><strong>Since you want to make money:</strong> AI skills command a premium. Focus on building demonstrable projects and positioning yourself as the AI-skilled person in your field.</p>';
+    if (goals.indexOf('job') !== -1) html += '<p><strong>Since you want to get better at your job:</strong> The Power Tricks in Chapter 7 and the Workflows in Chapter 11 will have the most immediate impact on your daily work quality.</p>';
+    if (goals.indexOf('learn') !== -1) html += '<p><strong>Since you want to learn and grow:</strong> Work through the guide in order. Each chapter builds on the last. Take the quizzes to check your understanding.</p>';
+    if (goals.indexOf('automate') !== -1) html += '<p><strong>Since you want to automate:</strong> Chapters 18-20 are your targets. MCP servers, scheduled tasks, and 24/7 Claude are the automation trifecta.</p>';
+    content.innerHTML = html;
+  }
+
+  // ==================== POWER TRICKS LIBRARY ====================
+  var POWER_TRICKS = [
+    { name: 'Think Step by Step', phrase: 'Think step by step:', desc: 'Forces Claude to work through problems methodically instead of jumping to an answer.' },
+    { name: 'Think Harder / Ultrathink', phrase: 'Think harder about this.', desc: 'Escalating reasoning depth. Use "think hard", "think harder", or "ultrathink" for progressively deeper analysis.' },
+    { name: 'Push Back', phrase: 'You are wrong. Reconsider. I think [X] because [Y].', desc: 'Forces Claude to genuinely reconsider its answer when you disagree.' },
+    { name: 'Pre-mortem', phrase: 'Before answering, list reasons this might fail.', desc: 'Your built-in devil\'s advocate. Makes Claude find the holes before giving advice.' },
+    { name: 'Unknown Unknowns', phrase: 'What questions should I be asking that I am not?', desc: 'Surfaces things you did not know to ask about. Great for unfamiliar topics.' },
+    { name: 'No Laziness', phrase: 'Do not be lazy. Give me the complete answer. Do not say "and so on" or "etc."', desc: 'Stops Claude from cutting corners. Gets you the full, complete output.' },
+    { name: 'Self-Verification', phrase: 'Check your work. Go through each claim and verify it is correct. Fix any errors.', desc: 'Makes Claude review its own output for mistakes before you accept it.' },
+    { name: 'Create-Critique-Revise', phrase: 'Now pretend you are a [expert]. Critique what you just wrote. Be specific and harsh.', desc: 'Three rounds: create, critique, revise. Dramatically improves output quality.' },
+    { name: 'Specific Refinement', phrase: 'Make it better, specifically by [exact direction].', desc: 'Targeted improvement. "Make it better" is useless. Specific direction gets results.' },
+    { name: 'The Meta-Prompt', phrase: 'I need to [goal]. Write me the best possible prompt I could give you to get an excellent result.', desc: 'Have Claude write the perfect prompt for you. Useful when you are not sure how to ask.' },
+    { name: 'Self-Consistency Check', phrase: 'Give me three different approaches to this problem. Then compare them and tell me which one is strongest and why.', desc: 'Generates multiple reasoning paths and picks the most consistent answer. Reduces errors on complex problems.' },
+    { name: 'Context Layering', phrase: 'Here is the situation: [background]. Here is what I have tried: [attempts]. Here is the constraint: [limit]. Now solve this.', desc: 'Stack context in layers so Claude sees the full picture before answering. Better results than dumping everything in one paragraph.' },
+    { name: 'Output Scaffolding', phrase: 'Structure your response as: (1) one-sentence summary, (2) detailed explanation, (3) specific example, (4) what to watch out for.', desc: 'Tell Claude exactly how to format its response. Removes the guesswork and gives you consistently usable output.' }
+  ];
+
+  function buildPowerTricksLibrary() {
+    var container = document.getElementById('ptl-cards');
+    if (!container) return;
+    container.innerHTML = '';
+    POWER_TRICKS.forEach(function(trick) {
+      var card = document.createElement('div');
+      card.className = 'ptl-card';
+      card.setAttribute('data-search', (trick.name + ' ' + trick.phrase + ' ' + trick.desc).toLowerCase());
+      card.innerHTML =
+        '<div class="ptl-card-name">' + trick.name + '</div>' +
+        '<div class="ptl-card-phrase">' + trick.phrase.replace(/</g,'&lt;') +
+        '<button class="ptl-copy" onclick="navigator.clipboard.writeText(this.parentElement.textContent.replace(\'Copy\',\'\').replace(\'Copied!\',\'\').trim());this.textContent=\'Copied!\';setTimeout(()=>this.textContent=\'Copy\',2000)">Copy</button></div>' +
+        '<div class="ptl-card-desc">' + trick.desc + '</div>';
+      container.appendChild(card);
+    });
+
+    var searchBox = document.getElementById('ptl-search');
+    if (searchBox) {
+      searchBox.addEventListener('input', function() {
+        var q = this.value.toLowerCase();
+        container.querySelectorAll('.ptl-card').forEach(function(card) {
+          card.style.display = card.getAttribute('data-search').indexOf(q) !== -1 ? '' : 'none';
+        });
+      });
+    }
+  }
+
+  // ==================== MULTI-PERSONA DASHBOARD INTRO ====================
+  function getDynamicIntro(profile) {
+    var personas = profile.personas && profile.personas.length > 0 ? profile.personas : ['other'];
+    var goals = profile.goals || [];
+
+    // Specific value per persona - what they will ACTUALLY get
+    var personaValue = {
+      business: 'As a business owner, you will learn to automate proposals, draft client emails in seconds, analyze competitors, generate marketing content, and build SOPs without hiring extra help.',
+      student: 'As a student, you will master research techniques that cut hours off every paper, build a portfolio that stands out to employers, prepare for interviews with AI coaching, and study smarter with AI-generated practice tests.',
+      professional: 'As a working professional, you will cut hours off reporting, draft communications your team actually reads, analyze data without spreadsheet headaches, and become the person everyone asks about AI.',
+      creative: 'As a creative, you will generate ideas on demand, write client proposals in minutes, build content calendars, handle the business side of your work faster, and use AI tools for image, video, and audio alongside text.',
+      educator: 'As an educator, you will build lesson plans in minutes, create differentiated materials for every student level, generate assessments and rubrics, provide personalized feedback at scale, and design assignments that work with AI instead of against it.',
+      healthcare: 'As a healthcare professional, you will draft documentation faster, create patient education materials, manage continuing education, and learn to use AI safely within privacy and compliance boundaries.',
+      personal: 'For your personal life, you will plan meals, manage budgets, understand complex documents like leases and medical bills, plan trips, help your kids with homework, and finally organize everything that currently lives in your head.',
+      technical: 'With your technical background, you will skip the basics and go straight to Claude Code, MCP server integrations, 24/7 automation setups, and building real applications that run autonomously.',
+      other: 'You will learn exactly how AI fits into your specific situation, with practical tools and prompts you can use the same day you read them.'
+    };
+
+    // Specific value per goal
+    var goalValue = {
+      'save-time': 'On saving time: you will set up specific workflows that eliminate tasks you currently do manually, with real before-and-after comparisons.',
+      'build': 'On building: you will go from idea to working product within the guide itself, with step-by-step project walkthroughs.',
+      'job': 'On your career: you will learn the AI skills employers are actively paying more for, and how to demonstrate them.',
+      'automate': 'On automation: you will set up systems that run without you touching them, from email monitoring to daily briefings.',
+      'learn': 'On learning: every chapter builds on the last with quizzes and self-check milestones so you know you are actually progressing.',
+      'money': 'On making money: you will see exactly how AI skills translate to income, whether through your current role or building something new.'
+    };
+
+    // Build the intro with specific value for each persona
+    var parts = [];
+    parts.push('Here is what this guide will do for you specifically:');
+    personas.forEach(function(p) {
+      if (personaValue[p]) parts.push(personaValue[p]);
+    });
+
+    // Add goal-specific value
+    goals.forEach(function(g) {
+      if (goalValue[g]) parts.push(goalValue[g]);
+    });
+
+    return parts.join('\n\n');
+  }
+
+  // ==================== RIGHT WORKSPACE PANEL ====================
+  var RPANEL_KEY = 'claude-mastery-rpanel-state';
+  var RPANEL_NOTES_KEY = 'claude-mastery-rpanel-notes';
+  var CUSTOM_CATS_KEY = 'claude-mastery-custom-cats';
+
+  function getRPanelState() {
+    try { return JSON.parse(localStorage.getItem(RPANEL_KEY)) || { open: false, tab: 'notes' }; } catch(e) { return { open: false, tab: 'notes' }; }
+  }
+  function saveRPanelState(s) { localStorage.setItem(RPANEL_KEY, JSON.stringify(s)); }
+
+  function toggleRightPanel() {
+    var panel = document.getElementById('right-panel');
+    var overlay = document.getElementById('rpanel-overlay');
+    var isOpen = panel.classList.contains('open');
+    if (isOpen) {
+      panel.classList.remove('open');
+      document.body.classList.remove('rpanel-open');
+      overlay.classList.remove('visible');
+      saveRPanelState({ open: false, tab: getRPanelState().tab });
+    } else {
+      panel.classList.add('open');
+      document.body.classList.add('rpanel-open');
+      if (window.innerWidth < 1024) overlay.classList.add('visible');
+      saveRPanelState({ open: true, tab: getRPanelState().tab });
+    }
+  }
+
+  function initRightPanel() {
+    var panel = document.getElementById('right-panel');
+    var overlay = document.getElementById('rpanel-overlay');
+    var toggleBtn = document.getElementById('rpanel-toggle');
+    var state = getRPanelState();
+
+    // Toggle button
+    toggleBtn.addEventListener('click', toggleRightPanel);
+    overlay.addEventListener('click', toggleRightPanel);
+
+    // Tab switching
+    var tabs = panel.querySelectorAll('.rp-tabs button');
+    tabs.forEach(function(tab) {
+      tab.addEventListener('click', function() {
+        tabs.forEach(function(t) { t.classList.remove('active'); });
+        tab.classList.add('active');
+        panel.querySelectorAll('.rp-tab-content').forEach(function(tc) { tc.classList.remove('active'); });
+        document.getElementById('rp-tab-' + tab.getAttribute('data-rptab')).classList.add('active');
+        var s = getRPanelState();
+        s.tab = tab.getAttribute('data-rptab');
+        saveRPanelState(s);
+      });
+    });
+
+    // Restore state
+    if (state.open && window.innerWidth >= 900) {
+      panel.classList.add('open');
+      document.body.classList.add('rpanel-open');
+    }
+    if (state.tab) {
+      tabs.forEach(function(t) { t.classList.remove('active'); });
+      panel.querySelectorAll('.rp-tab-content').forEach(function(tc) { tc.classList.remove('active'); });
+      var targetTab = panel.querySelector('.rp-tabs button[data-rptab="' + state.tab + '"]');
+      var targetContent = document.getElementById('rp-tab-' + state.tab);
+      if (targetTab && targetContent) {
+        targetTab.classList.add('active');
+        targetContent.classList.add('active');
+      } else {
+        tabs[0].classList.add('active');
+        document.getElementById('rp-tab-notes').classList.add('active');
+      }
+    }
+
+    // Notes tab
+    initRPanelNotes();
+    // AI tab
+    initRPanelAI();
+    // Bookmarks tab
+    updateRPanelBookmarks();
+    // Quick Ref tab
+    initRPanelQuickRef();
+  }
+
+  // --- Notes Tab ---
+  function initRPanelNotes() {
+    var textarea = document.getElementById('rp-notes-textarea');
+    var savedIndicator = document.getElementById('rp-notes-saved');
+    var saveTimer = null;
+
+    // Load saved notes
+    var saved = localStorage.getItem(RPANEL_NOTES_KEY) || '';
+    textarea.value = saved;
+
+    // Auto-save on typing
+    textarea.addEventListener('input', function() {
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(function() {
+        localStorage.setItem(RPANEL_NOTES_KEY, textarea.value);
+        savedIndicator.classList.add('visible');
+        setTimeout(function() { savedIndicator.classList.remove('visible'); }, 1500);
+      }, 500);
+    });
+
+    // Clear button
+    document.getElementById('rp-notes-clear').addEventListener('click', function() {
+      if (confirm('Clear all notes? This cannot be undone.')) {
+        textarea.value = '';
+        localStorage.setItem(RPANEL_NOTES_KEY, '');
+      }
+    });
+
+    // Export button
+    document.getElementById('rp-notes-export').addEventListener('click', function() {
+      var text = textarea.value;
+      if (!text.trim()) { alert('No notes to export.'); return; }
+      var blob = new Blob([text], { type: 'text/plain' });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'ai-playbook-notes.txt';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+  }
+
+  // --- AI Tab (in right panel) ---
+  function initRPanelAI() {
+    var messages = document.getElementById('rp-ai-messages');
+    var input = document.getElementById('rp-ai-input');
+    var sendBtn = document.getElementById('rp-ai-send');
+
+    function sendRPAIMessage() {
+      var q = input.value.trim();
+      if (!q) return;
+      var userMsg = document.createElement('div');
+      userMsg.className = 'ai-msg user';
+      userMsg.textContent = q;
+      messages.appendChild(userMsg);
+      input.value = '';
+
+      // Check if this should be packaged as a prompt
+      var answer = answerAI(q);
+      var shouldPackage = false;
+      var wordCount = q.split(/\s+/).length;
+
+      // Detect rough prompts: longer than 15 words and the AI did not find a strong match
+      if (wordCount > 15) {
+        var topScore = 0;
+        AI_QA.forEach(function(item) {
+          var s = scoreMatch(q, item);
+          if (s > topScore) topScore = s;
+        });
+        if (topScore < 8) shouldPackage = true;
+      }
+
+      var botMsg = document.createElement('div');
+      botMsg.className = 'ai-msg bot';
+
+      if (shouldPackage) {
+        var packaged = packagePrompt(q);
+        botMsg.innerHTML = 'It looks like you are describing a task. Want to send this to Claude? Here is a stronger, structured version of your prompt:<div class="prompt-package-box"><span class="pp-prompt-text">' +
+          packaged.replace(/</g,'&lt;').replace(/\n/g,'<br>') +
+          '</span><br><button class="pp-copy-btn" onclick="navigator.clipboard.writeText(this.parentElement.querySelector(\'.pp-prompt-text\').textContent.replace(/\\n/g,\'\\n\'));this.textContent=\'Copied!\';setTimeout(()=>this.textContent=\'Copy Prompt\',2000)">Copy Prompt</button></div>';
+      } else {
+        botMsg.innerHTML = answer.replace(/\n/g, '<br>');
+      }
+
+      messages.appendChild(botMsg);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    sendBtn.addEventListener('click', sendRPAIMessage);
+    input.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); sendRPAIMessage(); } });
+  }
+
+  // --- Prompt Packager ---
+  function packagePrompt(rawInput) {
+    // Parse the rough input and structure it
+    var lines = rawInput.trim();
+
+    // Try to detect the core task
+    var taskMatch = lines.match(/(?:i need|i want|help me|can you|please|i'm trying to|write|create|build|make|design|plan|analyze|research|explain|draft|prepare)\s+(.+)/i);
+    var task = taskMatch ? taskMatch[1].replace(/\.\s*$/, '') : lines;
+
+    // Try to detect audience hints
+    var audienceMatch = lines.match(/(?:for|to)\s+(my boss|my team|my client|a customer|my professor|my teacher|my manager|students|employees|stakeholders|investors|the board)/i);
+    var audience = audienceMatch ? audienceMatch[1] : '';
+
+    // Try to detect tone hints
+    var toneMatch = lines.match(/(?:professional|casual|formal|friendly|serious|persuasive|diplomatic|confident)/i);
+    var tone = toneMatch ? toneMatch[0].toLowerCase() : 'professional';
+
+    // Build structured prompt
+    var prompt = '## Task\n' + task.charAt(0).toUpperCase() + task.slice(1) + '.\n\n';
+    prompt += '## Context\n[Add 1-2 sentences about who you are and why you need this.]\n\n';
+    prompt += '## Specifications\n';
+    if (audience) prompt += '- Audience: ' + audience + '\n';
+    else prompt += '- Audience: [Specify who will read/use this]\n';
+    prompt += '- Tone: ' + tone.charAt(0).toUpperCase() + tone.slice(1) + '\n';
+    prompt += '- Length: Be thorough but focused. Cover the key points without unnecessary filler.\n';
+    prompt += '\n## Quality Standards\n';
+    prompt += '- Be specific and actionable, not generic.\n';
+    prompt += '- Use concrete examples and details.\n';
+    prompt += '- Tailor everything to the context provided.\n';
+    prompt += '\nAfter completing the output, review it for errors and inconsistencies. Fix anything you find before presenting the final version.';
+
+    return prompt;
+  }
+
+  // --- Bookmarks Tab (right panel) ---
+  function updateRPanelBookmarks() {
+    var container = document.getElementById('rp-bookmarks-content');
+    if (!container) return;
+    var bookmarks = getBookmarks();
+    var highlights = getHighlights();
+    var html = '';
+
+    if (bookmarks.length === 0 && highlights.length === 0) {
+      container.innerHTML = '<div class="rp-bm-empty">No bookmarks or highlights yet. Bookmark chapters or highlight text as you read.</div>';
+      return;
+    }
+
+    if (bookmarks.length > 0) {
+      html += '<div class="rp-bookmarks-section"><h4>Bookmarked Chapters</h4>';
+      bookmarks.forEach(function(chId) {
+        var ch = CHAPTERS.find(function(c) { return c.id === chId; });
+        var h2 = document.getElementById(chId);
+        var title = ch ? ch.title : (h2 ? h2.textContent.replace('Share','').replace('Bookmark','').replace('Bookmarked','').trim() : chId);
+        html += '<div class="rp-bm-item"><a href="#' + chId + '">' + title + '</a><button class="rp-bm-remove" data-chid="' + chId + '">Remove</button></div>';
+      });
+      html += '</div>';
+    }
+
+    if (highlights.length > 0) {
+      html += '<div class="rp-bookmarks-section"><h4>Highlighted Text</h4>';
+      highlights.forEach(function(h, idx) {
+        html += '<div class="rp-highlight-item">';
+        html += '<div class="rp-highlight-text">"' + h.text.replace(/</g,'&lt;').substring(0, 100) + (h.text.length > 100 ? '...' : '') + '"</div>';
+        if (h.note) html += '<div class="rp-highlight-note">' + h.note.replace(/</g,'&lt;') + '</div>';
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+
+    container.innerHTML = html;
+
+    // Bind remove buttons
+    container.querySelectorAll('.rp-bm-remove').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var chId = btn.getAttribute('data-chid');
+        var bm = getBookmarks();
+        var idx = bm.indexOf(chId);
+        if (idx !== -1) bm.splice(idx, 1);
+        saveBookmarks(bm);
+        updateRPanelBookmarks();
+        updateBookmarksTab();
+        updateNotesBookmarksTab();
+        var bmBtn = document.querySelector('h2#' + chId + ' .bookmark-btn');
+        if (bmBtn) { bmBtn.textContent = 'Bookmark'; bmBtn.classList.remove('bookmarked'); }
+      });
+    });
+  }
+
+  // --- Quick Ref Tab ---
+  var GLOSSARY_TERMS = [];
+
+  function initRPanelQuickRef() {
+    var container = document.getElementById('rp-qr-content');
+    if (!container) return;
+
+    // Collect glossary terms from the page
+    document.querySelectorAll('.glossary-item').forEach(function(item) {
+      var term = item.querySelector('.glossary-term');
+      var def = item.querySelector('.glossary-def');
+      if (term && def) {
+        GLOSSARY_TERMS.push({ term: term.textContent, def: def.textContent });
+      }
+    });
+
+    buildQuickRefContent();
+
+    // Search filter
+    var searchBox = document.getElementById('rp-qr-search');
+    searchBox.addEventListener('input', function() {
+      var q = this.value.toLowerCase();
+      container.querySelectorAll('.rp-qr-card, .rp-glossary-item').forEach(function(el) {
+        var searchText = el.getAttribute('data-search') || el.textContent.toLowerCase();
+        el.style.display = searchText.indexOf(q) !== -1 ? '' : 'none';
+      });
+      // Show/hide section headers based on visible children
+      container.querySelectorAll('.rp-qr-section').forEach(function(sec) {
+        var visibleItems = sec.querySelectorAll('.rp-qr-card:not([style*="display: none"]), .rp-glossary-item:not([style*="display: none"])');
+        sec.style.display = visibleItems.length > 0 ? '' : 'none';
+      });
+    });
+  }
+
+  function buildQuickRefContent() {
+    var container = document.getElementById('rp-qr-content');
+    if (!container) return;
+    var html = '';
+
+    // Power Tricks section
+    html += '<div class="rp-qr-section"><h4>Power Tricks</h4>';
+    POWER_TRICKS.forEach(function(trick) {
+      html += '<div class="rp-qr-card" data-search="' + (trick.name + ' ' + trick.phrase + ' ' + trick.desc).toLowerCase() + '">';
+      html += '<div class="rp-qr-card-name">' + trick.name + '</div>';
+      html += '<div class="rp-qr-card-phrase"><span>' + trick.phrase.replace(/</g,'&lt;') + '</span><button class="rp-qr-copy">Copy</button></div>';
+      html += '<div class="rp-qr-card-desc">' + trick.desc + '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+
+    // Key Prompts section
+    html += '<div class="rp-qr-section"><h4>Key Prompt Patterns</h4>';
+    var keyPrompts = [
+      { name: 'Role Assignment', phrase: 'You are a [role] with [X] years of experience in [field].', desc: 'Sets the expert persona for better domain-specific responses.' },
+      { name: 'Structured Output', phrase: 'Format your response as: 1) Summary, 2) Key Points, 3) Action Items.', desc: 'Gets organized, scannable output instead of walls of text.' },
+      { name: 'Iterative Refinement', phrase: 'Good start. Now improve it by focusing on [specific aspect].', desc: 'Multi-turn refinement produces better results than one-shot prompts.' },
+      { name: 'Few-Shot Examples', phrase: 'Here is an example of what I want: [example]. Now do the same for [new topic].', desc: 'Showing Claude an example is one of the most powerful techniques.' },
+      { name: 'Constraint Setting', phrase: 'Keep it under [N] words. Do not use jargon. Write at a [grade] reading level.', desc: 'Clear constraints prevent Claude from over-explaining or going off-track.' }
+    ];
+    keyPrompts.forEach(function(p) {
+      html += '<div class="rp-qr-card" data-search="' + (p.name + ' ' + p.phrase + ' ' + p.desc).toLowerCase() + '">';
+      html += '<div class="rp-qr-card-name">' + p.name + '</div>';
+      html += '<div class="rp-qr-card-phrase"><span>' + p.phrase.replace(/</g,'&lt;') + '</span><button class="rp-qr-copy">Copy</button></div>';
+      html += '<div class="rp-qr-card-desc">' + p.desc + '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+
+    // Glossary section
+    if (GLOSSARY_TERMS.length > 0) {
+      html += '<div class="rp-qr-section"><h4>Glossary</h4>';
+      GLOSSARY_TERMS.forEach(function(g) {
+        html += '<div class="rp-glossary-item" data-search="' + (g.term + ' ' + g.def).toLowerCase() + '">';
+        html += '<div class="rp-glossary-term">' + g.term + '</div>';
+        html += '<div class="rp-glossary-def">' + g.def + '</div>';
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+
+    container.innerHTML = html;
+
+    // Bind copy buttons
+    container.querySelectorAll('.rp-qr-copy').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var phrase = btn.parentElement.querySelector('span').textContent;
+        navigator.clipboard.writeText(phrase).then(function() {
+          btn.textContent = 'Copied!';
+          setTimeout(function() { btn.textContent = 'Copy'; }, 2000);
+        });
+      });
+    });
+  }
+
+  // ==================== CUSTOM PROMPT CATEGORIES ====================
+  function getCustomCategories() {
+    try { return JSON.parse(localStorage.getItem(CUSTOM_CATS_KEY)) || {}; } catch(e) { return {}; }
+  }
+  function saveCustomCategories(cats) { localStorage.setItem(CUSTOM_CATS_KEY, JSON.stringify(cats)); }
+
+  function loadCustomCategories() {
+    var cats = getCustomCategories();
+    var select = document.getElementById('pb-category');
+    if (!select) return;
+    // Remove any previously added custom options (before the __custom__ option)
+    var customOption = select.querySelector('option[value="__custom__"]');
+    var existingCustom = select.querySelectorAll('option[data-custom="true"]');
+    existingCustom.forEach(function(opt) { opt.remove(); });
+    // Add custom categories before the __custom__ option
+    Object.keys(cats).forEach(function(key) {
+      var opt = document.createElement('option');
+      opt.value = key;
+      opt.textContent = cats[key].name;
+      opt.setAttribute('data-custom', 'true');
+      select.insertBefore(opt, customOption);
+    });
+    // Also update PB_TASKS with custom category tasks
+    Object.keys(cats).forEach(function(key) {
+      PB_TASKS[key] = cats[key].tasks || ['Custom task (type your own below)'];
+    });
+  }
+
+  window.addCustomCategory = function() {
+    var nameInput = document.getElementById('pb-custom-cat-name');
+    var name = nameInput.value.trim();
+    if (!name) { alert('Please enter a category name.'); return; }
+    var key = 'custom_' + name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+    var cats = getCustomCategories();
+    cats[key] = { name: name, tasks: ['Custom task (describe your own)'] };
+    saveCustomCategories(cats);
+    loadCustomCategories();
+    nameInput.value = '';
+    document.getElementById('pb-custom-cat-area').style.display = 'none';
+    document.getElementById('pb-category').value = key;
+    updatePBTasks();
+  };
+
+  // Override updatePBTasks to handle custom category selection
+  var origUpdatePBTasks = window.updatePBTasks;
+  window.updatePBTasks = function() {
+    var cat = document.getElementById('pb-category').value;
+    if (cat === '__custom__') {
+      document.getElementById('pb-custom-cat-area').style.display = 'block';
+      document.getElementById('pb-custom-cat-name').focus();
+      return;
+    }
+    document.getElementById('pb-custom-cat-area').style.display = 'none';
+    var taskSelect = document.getElementById('pb-task');
+    taskSelect.innerHTML = '<option value="">Select a task...</option>';
+    if (cat && PB_TASKS[cat]) {
+      PB_TASKS[cat].forEach(function(t) {
+        var opt = document.createElement('option');
+        opt.value = t; opt.textContent = t;
+        taskSelect.appendChild(opt);
+      });
+    }
+  };
+
   // ==================== INIT ====================
   function init() {
     initDarkMode();
@@ -5695,9 +7715,18 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
     updateDashboard();
     updateReadingProgress();
     addShareLinks();
+    addBookmarkButtons();
     addNoteButtons();
     addCopyButtons();
     initQuizzes();
+    initSidebarTabs();
+    initTextHighlighting();
+    buildPowerTricksLibrary();
+    updateBookmarksTab();
+    updateNotesBookmarksTab();
+    updateGetAheadSection();
+    initRightPanel();
+    loadCustomCategories();
 
     if (!profile) {
       showOnboarding();
@@ -5706,10 +7735,23 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
     }
   }
 
+  // Reading progress bar
+  function initReadingProgress() {
+    var bar = document.getElementById('reading-progress-bar');
+    if (!bar) return;
+    window.addEventListener('scroll', function() {
+      var scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      var docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      var progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+      bar.style.width = progress + '%';
+    }, { passive: true });
+  }
+
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
+    document.addEventListener('DOMContentLoaded', function() { init(); initReadingProgress(); });
   } else {
     init();
+    initReadingProgress();
   }
 })();
 </script>
