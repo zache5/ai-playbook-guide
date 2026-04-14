@@ -135,9 +135,8 @@ h2 {
   position: relative;
 }
 
-h2 .share-link {
+h2 .share-link, h2 .listen-btn {
   position: absolute;
-  right: 0;
   top: 50%;
   transform: translateY(-50%);
   font-size: 0.55em;
@@ -151,8 +150,11 @@ h2 .share-link {
   border: 1px solid var(--border);
   background: var(--bg);
 }
-h2:hover .share-link { opacity: 1; }
-h2 .share-link:hover { color: var(--accent); border-color: var(--accent); }
+h2 .share-link { right: 0; }
+h2 .listen-btn { right: 60px; }
+h2:hover .share-link, h2:hover .listen-btn { opacity: 1; }
+h2 .share-link:hover, h2 .listen-btn:hover { color: var(--accent); border-color: var(--accent); }
+h2 .listen-btn.speaking { opacity: 1; color: var(--red); border-color: var(--red); }
 
 h3 {
   font-size: 14pt;
@@ -2978,7 +2980,7 @@ A clear framework for when AI use is appropriate and when it is not. No more sec
 
 <h3>What is a context window (the whiteboard analogy)</h3>
 
-<p>Imagine Claude has a whiteboard. Everything you say and everything Claude says gets written on this whiteboard. The whiteboard is big (around 200,000 words for Claude), but not infinite.</p>
+<p>Imagine Claude has a whiteboard. Everything you say and everything Claude says gets written on this whiteboard. The whiteboard is massive (up to 1 million tokens, roughly 700,000 words for Claude), but not infinite.</p>
 
 <p>When the whiteboard fills up, the oldest content starts getting erased. This is why long conversations eventually degrade: Claude literally cannot see your earlier instructions anymore. Signs this is happening:</p>
 
@@ -3317,13 +3319,13 @@ A practical framework for catching AI mistakes before they become your mistakes.
 <li><strong>Precise math.</strong> Claude can reason about math concepts, but it sometimes makes arithmetic errors on complex calculations. For anything financial or mission-critical, verify the numbers with a calculator or spreadsheet.</li>
 <li><strong>Very recent events.</strong> Anything that happened after Claude's training cutoff is unknown territory. Claude will sometimes try to answer anyway, which leads to confident-sounding wrong answers.</li>
 <li><strong>Highly specialized niche domains.</strong> Claude knows a lot about a lot, but it is not an expert in extremely specialized fields like rare medical conditions, obscure legal jurisdictions, or cutting-edge research published last month.</li>
-<li><strong>Very long documents.</strong> Claude has a 200K token context window (roughly 150,000 words), which is huge. But if you try to paste an entire book or a massive codebase, it will hit limits. Performance also degrades on the edges of that window.</li>
+<li><strong>Very long documents.</strong> Claude now supports up to 1 million tokens of context (roughly 700,000 words), which is enormous. But even with this massive window, performance can degrade toward the edges, and very large inputs still cost more tokens from your plan allowance.</li>
 <li><strong>Counting and spatial reasoning.</strong> Ask Claude how many times the letter "r" appears in "strawberry" and it might get it wrong. These seem like easy tasks, but they are actually hard for language models.</li>
 </ul>
 
 <h3>Context window limits explained practically</h3>
 
-<p>Think of Claude's context window as a 200,000-word whiteboard. Everything you say, everything Claude says, and any documents you upload all go on this whiteboard. When it fills up, the oldest content falls off.</p>
+<p>Think of Claude's context window as a massive whiteboard that holds up to 1 million tokens (roughly 700,000 words). Everything you say, everything Claude says, and any documents you upload all go on this whiteboard. When it fills up, the oldest content falls off.</p>
 
 <p>In practice, this means:</p>
 <ul>
@@ -3376,7 +3378,7 @@ Claude is the best tool for many tasks. But not all tasks. Here is an honest bre
 <h4>What Gemini does better</h4>
 <ul>
 <li><strong>Google integration:</strong> Gemini connects natively to Gmail, Google Docs, Drive, and other Google services. If your life runs on Google, this matters.</li>
-<li><strong>Long context:</strong> Gemini 1.5 Pro supports up to 1 million tokens of context, roughly 5x Claude's window. For analyzing extremely large documents, this is an advantage.</li>
+<li><strong>Google integration depth:</strong> Gemini connects deeply to the full Google Workspace suite, making it seamless if your workflow lives entirely in Google products.</li>
 <li><strong>Multimodal input:</strong> Gemini handles video input natively, which Claude does not.</li>
 </ul>
 
@@ -3961,9 +3963,27 @@ In early 2026, developers and business owners started sharing a pattern called t
 Developers on Hacker News have been sharing setups where they point Claude Code at their codebase before going to bed. By morning, it has reviewed recent changes, run the test suite, flagged potential issues, and left a summary. The pattern works for non-code tasks too: schedule Claude to review your week's documents, identify inconsistencies, and compile a list of items that need your attention.
 </div>
 
+<h3>Claude Code Routines (NEW: April 2026)</h3>
+
+<p>Anthropic just launched <strong>Routines</strong> as a research preview. This is a major upgrade to automation. Routines run on Anthropic's cloud infrastructure, so your computer does not need to be on for them to execute.</p>
+
+<p>Three trigger types:</p>
+<ul>
+<li><strong>Scheduled:</strong> Run on a fixed cadence (daily, weekly, custom cron). Example: nightly bug triage across your codebase.</li>
+<li><strong>API-triggered:</strong> Fire a routine from any external tool or webhook. Example: when a new sale comes in, generate a thank-you email draft.</li>
+<li><strong>GitHub event:</strong> Run automatically when a pull request is opened, code is pushed, or an issue is created. Example: automatic code review based on your team's standards.</li>
+</ul>
+
+<p>You configure the prompt, repository, and connectors once. Then the routine runs on its own. No tmux session required. No Mac Mini running 24/7.</p>
+
+<div class="callout callout-note">
+<div class="callout-title">Availability</div>
+Routines are available on Pro (5 runs/day), Max (15 runs/day), and Max Ultra (25 runs/day) plans. This is a research preview, so features and limits may change.
+</div>
+
 <div class="chapter-outcome">
 <div class="outcome-title">What You Now Have</div>
-Your first automation. Claude now does work for you while you are doing other things. This is the moment Claude stops being a tool you use and becomes an assistant that works for you.
+Your first automation. Claude now does work for you while you are doing other things. With Routines, it can even do this without your computer being on. This is the moment Claude stops being a tool you use and becomes an assistant that works for you.
 </div>
 
 <hr class="chapter-sep">
@@ -4942,6 +4962,7 @@ Walk me through: pros/cons of each, what I am overlooking, what I will regret in
 <tr><td>MCP servers</td><td>No</td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
 <tr><td>Priority access</td><td>No</td><td>No</td><td>Yes</td><td>Yes</td></tr>
 <tr><td>Training data</td><td>Unless opted out</td><td>Unless opted out</td><td>No (default)</td><td>No (default)</td></tr>
+<tr><td>Routines (cloud automations)</td><td>No</td><td>5 runs/day</td><td>15 runs/day</td><td>25 runs/day</td></tr>
 </table>
 
 <div class="callout callout-tip">
@@ -4978,7 +4999,7 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
 <div class="glossary-item"><div class="glossary-term">Anthropic</div><div class="glossary-def">The company that makes Claude. Founded by former OpenAI researchers. Based in San Francisco.</div></div>
 <div class="glossary-item"><div class="glossary-term">CLAUDE.md</div><div class="glossary-def">A text file that Claude Code reads at the start of every session. It contains your preferences, instructions, and context so Claude remembers who you are.</div></div>
 <div class="glossary-item"><div class="glossary-term">Claude Code</div><div class="glossary-def">An AI agent that runs in your terminal and can create files, build projects, connect to services, and automate tasks on your computer.</div></div>
-<div class="glossary-item"><div class="glossary-term">Context Window</div><div class="glossary-def">The amount of text an AI can "see" at once. Like a whiteboard that fills up. When full, the oldest content gets erased. Claude's is about 200,000 words.</div></div>
+<div class="glossary-item"><div class="glossary-term">Context Window</div><div class="glossary-def">The amount of text an AI can "see" at once. Like a whiteboard that fills up. When full, the oldest content gets erased. Claude's is up to 1 million tokens (roughly 700,000 words).</div></div>
 <div class="glossary-item"><div class="glossary-term">Cron</div><div class="glossary-def">A scheduling system used to run tasks at specific times. "0 8 * * 1-5" means "every weekday at 8am." Claude's /schedule command handles this for you in plain English.</div></div>
 <div class="glossary-item"><div class="glossary-term">Fine-tuning</div><div class="glossary-def">Training a general AI model on specific data to make it better at one thing. Like hiring a generalist and then training them on your industry. You will never need to do this yourself.</div></div>
 <div class="glossary-item"><div class="glossary-term">GPT (Generative Pre-trained Transformer)</div><div class="glossary-def">The type of AI architecture ChatGPT uses. A technical term for a specific approach to building language models. Claude uses a similar but distinct approach.</div></div>
@@ -4994,6 +5015,7 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
 <div class="glossary-item"><div class="glossary-term">Prompt</div><div class="glossary-def">The text you send to an AI. Everything you type in the message box is your prompt. Better prompts produce better results.</div></div>
 <div class="glossary-item"><div class="glossary-term">Prompt Engineering</div><div class="glossary-def">The skill of writing effective prompts to get useful AI output. What most of this guide teaches you.</div></div>
 <div class="glossary-item"><div class="glossary-term">RAG (Retrieval-Augmented Generation)</div><div class="glossary-def">A technique where AI looks up information in a database before answering, instead of relying only on training data. Like giving Claude a filing cabinet to reference.</div></div>
+<div class="glossary-item"><div class="glossary-term">Routines</div><div class="glossary-def">Claude Code automations that run on Anthropic's cloud without your computer. Triggered on a schedule, via API, or by GitHub events. Available on paid plans as a research preview (April 2026).</div></div>
 <div class="glossary-item"><div class="glossary-term">Rate Limit</div><div class="glossary-def">The maximum number of messages or tokens you can use in a given time period. Hit it, and you wait. Higher plans have higher limits.</div></div>
 <div class="glossary-item"><div class="glossary-term">Sonnet</div><div class="glossary-def">Claude's everyday model. Fast, capable, and efficient. Good for most tasks. The default when you open claude.ai.</div></div>
 <div class="glossary-item"><div class="glossary-term">SSH (Secure Shell)</div><div class="glossary-def">A way to connect to another computer remotely through the terminal. Used to access a Mac Mini server from your laptop or phone.</div></div>
@@ -5228,7 +5250,7 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
     // === GENERAL AI CONCEPTS ===
     {q:"what is a token", a:"A token is roughly 3/4 of a word. It is the basic unit AI models process. 'Hello world' is 2 tokens. Tokens determine cost and message limits. Clear, concise prompts use fewer tokens and are more efficient.", ch:"ch5"},
     {q:"what is hallucination", a:"When AI confidently states something wrong. It is not lying; it is generating text that sounds right but is fiction. Most common with specific numbers, recent events, and citations. Always verify important claims. Chapter 7 has a full verification framework.", ch:"ch7"},
-    {q:"what is a context window", a:"The amount of text AI can 'see' at once. Like a whiteboard: when it fills up, the oldest content gets erased. Claude's is about 200,000 words. Start a new conversation when responses degrade.", ch:"ch5"},
+    {q:"what is a context window", a:"The amount of text AI can 'see' at once. Like a whiteboard: when it fills up, the oldest content gets erased. Claude's is up to 1 million tokens (roughly 700,000 words). Start a new conversation when responses degrade.", ch:"ch5"},
     {q:"what is a model", a:"The AI 'brain.' A massive mathematical pattern trained on text data. Different models (Claude Opus, Sonnet, GPT-4) have different strengths. Nobody programmed specific answers in; it learned patterns from data.", ch:"ch5"},
     {q:"what is fine-tuning", a:"Training a general AI model on specific data to make it better at one thing. Like hiring a generalist and training them on your industry. You will never need to do this yourself.", ch:"ch5"},
     {q:"what is rag", a:"RAG (Retrieval-Augmented Generation) lets AI look things up in a database before answering, instead of relying only on training data. MCP servers use this concept.", ch:"ch5"},
@@ -5443,7 +5465,7 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
     {q:"what is a terminal", a:"The terminal is a text-based interface to your computer. Instead of clicking icons, you type commands. It might look intimidating, but you only need about 6 commands for Claude Code. Chapter 13 teaches terminal basics from scratch, assuming zero experience.", ch:"ch13"},
     {q:"what is an api", a:"API stands for Application Programming Interface. Think of it as a phone line between two pieces of software. When Claude connects to Gmail, it uses Gmail's API. You do not need to understand the technical details. You just need to know that APIs are how tools talk to each other.", ch:"glossary"},
     {q:"what are tokens", a:"Tokens are the basic units AI processes. One token is roughly 3/4 of a word. 'Hello world' is 2 tokens. Tokens determine how much you can say in one conversation and how much each interaction costs. Clear, concise messages use fewer tokens.", ch:"ch5"},
-    {q:"what is a context window", a:"The context window is the amount of text an AI can see at once. Think of it as a whiteboard: when it fills up, the oldest content gets erased. Claude's context window is about 200,000 tokens (roughly 150,000 words). Start a new conversation when responses start to degrade.", ch:"ch5"},
+    {q:"what is a context window", a:"The context window is the amount of text an AI can see at once. Think of it as a whiteboard: when it fills up, the oldest content gets erased. Claude's context window is up to 1 million tokens (roughly 700,000 words). Start a new conversation when responses start to degrade.", ch:"ch5"},
     {q:"what is hallucination", a:"When AI confidently states something that is wrong. It is not lying or being malicious. It generates text that sounds right based on patterns, but the patterns produced fiction. This is most common with specific numbers, citations, recent events, and niche topics. Always verify important claims.", ch:"ch8"},
     {q:"what is a prompt", a:"A prompt is whatever you type into the AI chat box. Everything you write is your prompt. Better prompts produce better results. Chapter 7 teaches 10 power tricks that dramatically improve your prompting.", ch:"ch7"},
     {q:"what is claude code", a:"Claude Code is an AI agent that runs in your computer's terminal. Unlike claude.ai (which just chats), Claude Code can create files, build websites, organize folders, connect to email, and automate tasks. Think of it as going from texting a smart friend to having that friend come to your house and do the work.", ch:"ch12"},
@@ -5520,8 +5542,10 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
     {q:"what is context engineering", a:"Context engineering is the 2026 evolution of prompt engineering. Instead of just crafting the perfect prompt, you design everything around the prompt: what files Claude sees, what instructions it starts with, what tools it has access to, and what examples you provide. The CLAUDE.md file and MCP servers are context engineering tools.", ch:"ch17"},
     {q:"how do i make money with ai", a:"AI can help you earn money in several ways: (1) Become more valuable at your current job by being the AI expert, (2) Freelance with AI-accelerated skills (writing, design, data analysis), (3) Build products or content faster, (4) Automate tasks and sell that time elsewhere. This guide covers practical business applications throughout, especially in Chapters 11, 22, and 24.", ch:"ch24"},
     {q:"can claude help with side hustles", a:"Yes. Claude can help with product research, content creation, marketing copy, pricing strategy, customer communication, and building digital products. Claude Code can build websites, create tools, and automate repetitive tasks. Chapters 22 and 24 cover entrepreneurial applications.", ch:"ch22"},
-    {q:"what is new in claude 2026", a:"Major 2026 updates include: Claude Sonnet 4.6 with 1M token context window, Computer Use in Cowork and Claude Code (point, click, navigate your screen), Claude Cowork desktop app for macOS and Windows, Managed Agents for autonomous AI operations, MCP crossing 97 million installs, and Office integration for Excel and PowerPoint.", ch:"ch2"},
+    {q:"what is new in claude 2026", a:"Major 2026 updates include: Claude Sonnet 4.6 and Opus 4.6 with 1M token context window, Claude Code Routines (cloud-based automations that run without your computer on), Computer Use in Cowork and Claude Code, Claude Cowork desktop app for macOS and Windows, Managed Agents for autonomous AI operations, the ant CLI for API interaction, MCP crossing 97 million installs, and Office integration for Excel and PowerPoint.", ch:"ch2"},
     {q:"what is the ant cli", a:"The ant CLI is Anthropic's command-line client for the Claude API. It allows faster interaction with the API, integrates natively with Claude Code, and lets you version API resources in YAML files. It is a developer tool, not needed for everyday Claude use.", ch:"appendix-c"},
+    {q:"what are routines", a:"Routines are a new Claude Code feature (April 2026, research preview) that run automations on Anthropic's cloud. Three trigger types: scheduled (runs on a cron schedule), API-triggered (fire from any webhook), and GitHub events (runs when a PR is opened or code is pushed). Your computer does not need to be on. Available on Pro (5/day), Max (15/day), and Max Ultra (25/day). Chapter 19 covers this.", ch:"ch19"},
+    {q:"claude code routines", a:"Routines let you set up automations that run in the cloud without your computer. Configure a prompt, repository, and triggers once, and it runs on its own. Use cases: nightly bug triage, automatic code review on pull requests, scheduled reports. Available as a research preview on all paid plans. See Chapter 19.", ch:"ch19"},
     {q:"can claude use my computer", a:"Yes. With Computer Use (available for Pro and Max users), Claude can see your screen, move the mouse, click buttons, and navigate applications. In Claude Code, it can read and write files, run commands, and interact with services. Both require your permission for each action.", ch:"ch12"},
     {q:"what are managed agents", a:"Managed Agents is a feature in Claude's API that lets you run Claude as an autonomous agent with secure sandboxing, built-in tools, and streaming. It is designed for developers building AI-powered applications. Most everyday users will not need this directly.", ch:"ch12"},
     {q:"how do i use ai at work", a:"Start with the tasks you do most often: email drafting, meeting summaries, report writing, data analysis, and document review. Use Claude to draft, then review and edit. Chapter 7 has power tricks for professional output, and Chapter 11 has ready-to-use workflows for common work tasks.", ch:"ch11"},
@@ -6496,6 +6520,75 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
           btn.textContent = 'Copied!';
           setTimeout(function() { btn.textContent = 'Share'; }, 2000);
         });
+      });
+      h2.appendChild(btn);
+    });
+  }
+
+  // ==================== TEXT-TO-SPEECH (Listen to Chapter) ====================
+  var ttsCurrentUtterance = null;
+  var ttsCurrentBtn = null;
+
+  function getChapterText(h2) {
+    var text = '';
+    var sibling = h2.nextElementSibling;
+    while (sibling) {
+      if (sibling.tagName === 'H2') break;
+      if (sibling.classList && (sibling.classList.contains('page-break') || sibling.classList.contains('chapter-sep'))) {
+        sibling = sibling.nextElementSibling;
+        continue;
+      }
+      text += ' ' + sibling.textContent;
+      sibling = sibling.nextElementSibling;
+    }
+    return text.trim().substring(0, 15000);
+  }
+
+  function stopTTS() {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+    if (ttsCurrentBtn) {
+      ttsCurrentBtn.textContent = 'Listen';
+      ttsCurrentBtn.classList.remove('speaking');
+      ttsCurrentBtn = null;
+    }
+    ttsCurrentUtterance = null;
+  }
+
+  function startTTS(h2, btn) {
+    if (!('speechSynthesis' in window)) { alert('Your browser does not support text-to-speech.'); return; }
+    if (ttsCurrentBtn === btn) { stopTTS(); return; }
+    stopTTS();
+    var text = h2.textContent.replace('Share', '').replace('Listen', '').replace('Stop', '') + '. ' + getChapterText(h2);
+    var utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 1.0;
+    utterance.pitch = 1.0;
+    var voices = window.speechSynthesis.getVoices();
+    var preferred = voices.find(function(v) { return v.lang.startsWith('en') && v.name.indexOf('Samantha') !== -1; })
+      || voices.find(function(v) { return v.lang.startsWith('en') && v.localService; })
+      || voices.find(function(v) { return v.lang.startsWith('en'); });
+    if (preferred) utterance.voice = preferred;
+    utterance.onend = function() { stopTTS(); };
+    utterance.onerror = function() { stopTTS(); };
+    ttsCurrentUtterance = utterance;
+    ttsCurrentBtn = btn;
+    btn.textContent = 'Stop';
+    btn.classList.add('speaking');
+    window.speechSynthesis.speak(utterance);
+  }
+
+  function addListenButtons() {
+    if (!('speechSynthesis' in window)) return;
+    document.querySelectorAll('h2[id]').forEach(function(h2) {
+      if (h2.querySelector('.listen-btn')) return;
+      if (!h2.id.match(/^ch\d+/)) return;
+      var btn = document.createElement('span');
+      btn.className = 'listen-btn no-print';
+      btn.textContent = 'Listen';
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        startTTS(h2, btn);
       });
       h2.appendChild(btn);
     });
@@ -7737,6 +7830,7 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
     updateDashboard();
     updateReadingProgress();
     addShareLinks();
+    addListenButtons();
     addBookmarkButtons();
     addNoteButtons();
     addCopyButtons();
