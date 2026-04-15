@@ -135,9 +135,10 @@ h2 {
   position: relative;
 }
 
-h2 .share-link, h2 .listen-btn {
+h2 .listen-btn {
   position: absolute;
   top: 50%;
+  right: 0;
   transform: translateY(-50%);
   font-size: 0.55em;
   font-weight: 500;
@@ -150,10 +151,8 @@ h2 .share-link, h2 .listen-btn {
   border: 1px solid var(--border);
   background: var(--bg);
 }
-h2 .share-link { right: 0; }
-h2 .listen-btn { right: 60px; }
-h2:hover .share-link, h2:hover .listen-btn { opacity: 1; }
-h2 .share-link:hover, h2 .listen-btn:hover { color: var(--accent); border-color: var(--accent); }
+h2:hover .listen-btn { opacity: 1; }
+h2 .listen-btn:hover { color: var(--accent); border-color: var(--accent); }
 h2 .listen-btn.speaking { opacity: 1; color: var(--red); border-color: var(--red); }
 
 h3 {
@@ -1956,7 +1955,7 @@ html.dark-mode .ch-badge.optional { background: #334155; color: #94a3b8; }
   #onboarding-overlay, #search-overlay, #ai-fab, #ai-panel, #toast-container,
   #top-nav, #user-dashboard, #shortcuts-modal, #back-to-top-btn, #continue-reading-btn,
   #right-panel, #rpanel-overlay,
-  .persona-callout, .sidebar-actions, .ch-badge, .share-link, .note-btn,
+  .persona-callout, .sidebar-actions, .ch-badge, .note-btn,
   .copy-btn, .user-note { display: none !important; }
   body.sidebar-open { margin-left: 0 !important; }
   body.rpanel-open { margin-right: 0 !important; }
@@ -2411,7 +2410,7 @@ textarea:focus-visible,
     min-height: 44px;
     padding: 12px 14px;
   }
-  h2 .share-link, h2 .listen-btn, h2 .bookmark-btn, h3 .note-btn {
+  h2 .listen-btn, h2 .bookmark-btn, h3 .note-btn {
     opacity: 1;
     min-height: 44px;
     min-width: 44px;
@@ -6443,22 +6442,22 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
 
     var body = document.getElementById('dash-body');
     body.innerHTML =
-      '<div style="margin-bottom:16px;">' + (name !== 'there' ? '<p style="font-size:1.1em;font-weight:700;margin-bottom:8px;">' + name + ', welcome to The AI Playbook.</p>' : '') + dynamicIntro.split('\n\n').map(function(p) { return '<p style="margin-bottom:8px;font-size:0.95em;color:#374151;line-height:1.5;">' + p + '</p>'; }).join('') + '</div>' +
+      '<div style="margin-bottom:16px;">' + (name !== 'there' ? '<p style="font-size:1.1em;font-weight:700;margin-bottom:8px;">' + name + ', welcome to The AI Playbook.</p>' : '') + dynamicIntro.split('\n\n').map(function(p) { return '<p style="margin-bottom:8px;font-size:0.95em;color:var(--text-secondary);line-height:1.5;">' + p + '</p>'; }).join('') + '</div>' +
       '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;font-size:13px;">' +
-        '<span style="background:#e8f0fe;color:#1a56db;padding:3px 10px;border-radius:6px;">' + (roles || 'Explorer') + '</span>' +
-        '<span style="background:#f0fdf4;color:#166534;padding:3px 10px;border-radius:6px;">' + expLabel + '</span>' +
+        '<span style="background:var(--accent-bg);color:var(--accent);padding:3px 10px;border-radius:6px;">' + (roles || 'Explorer') + '</span>' +
+        '<span style="background:var(--green-bg);color:var(--green-dark);padding:3px 10px;border-radius:6px;">' + expLabel + '</span>' +
       '</div>' +
-      '<div style="margin-bottom:14px;"><strong style="font-size:14px;">Tips for you:</strong><ul style="margin-top:4px;padding-left:18px;font-size:13px;color:#374151;">' + tipsHtml + '</ul></div>' +
+      '<div style="margin-bottom:14px;"><strong style="font-size:14px;">Tips for you:</strong><ul style="margin-top:4px;padding-left:18px;font-size:13px;color:var(--text-secondary);">' + tipsHtml + '</ul></div>' +
       '<div style="margin-bottom:14px;"><strong style="font-size:14px;">Self-check milestones:</strong>' + milestonesHtml + '</div>' +
       '<div style="margin-bottom:14px;"><strong style="font-size:14px;">Tools:</strong>' +
       '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;">' +
-      '<a href="#prompt-builder" style="background:#f5f3ff;color:#6d28d9;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;cursor:pointer;">Prompt Builder</a>' +
-      '<a href="#roi-calculator" style="background:#f5f3ff;color:#6d28d9;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;cursor:pointer;">ROI Calculator</a>' +
-      '<a href="#power-tricks-library" style="background:#f5f3ff;color:#6d28d9;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;cursor:pointer;">Power Tricks Library</a>' +
-      '<a onclick="document.getElementById(\'ai-panel\').classList.add(\'open\');document.getElementById(\'ai-input\').focus();" style="background:#f5f3ff;color:#6d28d9;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;cursor:pointer;">AI Assistant</a>' +
-      '<a href="#appendix-b" style="background:#f5f3ff;color:#6d28d9;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;cursor:pointer;">Prompt Templates</a>' +
-      '<a href="#glossary" style="background:#f5f3ff;color:#6d28d9;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;cursor:pointer;">Glossary</a>' +
-      '<a onclick="document.getElementById(\'search-overlay\').classList.add(\'visible\');document.getElementById(\'search-input\').focus();" style="background:#f5f3ff;color:#6d28d9;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;cursor:pointer;">Search (Cmd+K)</a>' +
+      '<a href="#prompt-builder" style="background:var(--purple-bg);color:var(--purple-dark);padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;cursor:pointer;">Prompt Builder</a>' +
+      '<a href="#roi-calculator" style="background:var(--purple-bg);color:var(--purple-dark);padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;cursor:pointer;">ROI Calculator</a>' +
+      '<a href="#power-tricks-library" style="background:var(--purple-bg);color:var(--purple-dark);padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;cursor:pointer;">Power Tricks Library</a>' +
+      '<a onclick="document.getElementById(\'ai-panel\').classList.add(\'open\');document.getElementById(\'ai-input\').focus();" style="background:var(--purple-bg);color:var(--purple-dark);padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;cursor:pointer;">AI Assistant</a>' +
+      '<a href="#appendix-b" style="background:var(--purple-bg);color:var(--purple-dark);padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;cursor:pointer;">Prompt Templates</a>' +
+      '<a href="#glossary" style="background:var(--purple-bg);color:var(--purple-dark);padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;cursor:pointer;">Glossary</a>' +
+      '<a onclick="document.getElementById(\'search-overlay\').classList.add(\'visible\');document.getElementById(\'search-input\').focus();" style="background:var(--purple-bg);color:var(--purple-dark);padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;cursor:pointer;">Search (Cmd+K)</a>' +
       '</div></div>' +
       '<strong style="font-size:14px;">Your recommended chapters:</strong>' +
       '<div class="dash-path">' + essentialLinks + '</div>';
@@ -7161,24 +7160,6 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
   })();
 
   // ==================== SHARE LINKS ====================
-  function addShareLinks() {
-    document.querySelectorAll('h2[id]').forEach(function(h2) {
-      if (h2.querySelector('.share-link')) return;
-      var btn = document.createElement('span');
-      btn.className = 'share-link';
-      btn.textContent = 'Share';
-      btn.addEventListener('click', function(e) {
-        e.preventDefault();
-        var url = window.location.origin + window.location.pathname + '#' + h2.id;
-        navigator.clipboard.writeText(url).then(function() {
-          btn.textContent = 'Copied!';
-          setTimeout(function() { btn.textContent = 'Share'; }, 2000);
-        });
-      });
-      h2.appendChild(btn);
-    });
-  }
-
   // ==================== TEXT-TO-SPEECH (Listen to Chapter) ====================
   var ttsCurrentUtterance = null;
   var ttsCurrentBtn = null;
@@ -7249,7 +7230,7 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
     if (!('speechSynthesis' in window)) { alert('Your browser does not support text-to-speech.'); return; }
     if (ttsCurrentBtn === btn) { stopTTS(); return; }
     stopTTS();
-    var text = h2.textContent.replace('Share', '').replace('Listen', '').replace('Stop', '') + '. ' + getChapterText(h2);
+    var text = h2.textContent.replace('Listen', '').replace('Stop', '') + '. ' + getChapterText(h2);
     ttsChunks = chunkText(text, 2000);
     ttsChunkIndex = 0;
     ttsCurrentBtn = btn;
@@ -8503,7 +8484,7 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
     updatePersonaCallouts();
     updateDashboard();
     updateReadingProgress();
-    addShareLinks();
+    // share links removed (private guide)
     addListenButtons();
     addBookmarkButtons();
     addNoteButtons();
