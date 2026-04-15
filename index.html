@@ -1607,6 +1607,83 @@ html.dark-mode .ch-badge.optional { background: #334155; color: #94a3b8; }
   margin-bottom: 4px;
 }
 
+/* Guided tour overlay */
+#tour-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 20000;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+#tour-overlay.active { opacity: 1; pointer-events: auto; }
+#tour-backdrop {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 20001;
+}
+#tour-tooltip {
+  position: fixed;
+  z-index: 20003;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px 22px;
+  max-width: 340px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+  color: var(--text);
+  font-size: 0.92em;
+  line-height: 1.55;
+  transition: top 0.3s, left 0.3s;
+}
+#tour-tooltip .tour-step-num {
+  font-size: 0.75em;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+#tour-tooltip .tour-text {
+  margin-bottom: 14px;
+}
+#tour-tooltip .tour-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+#tour-tooltip .tour-next-btn {
+  display: inline-block;
+  padding: 7px 20px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.88em;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+#tour-tooltip .tour-next-btn:hover { background: var(--accent-dark); }
+#tour-tooltip .tour-skip {
+  font-size: 0.82em;
+  color: var(--text-muted);
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: inherit;
+  text-decoration: underline;
+}
+#tour-tooltip .tour-skip:hover { color: var(--text-secondary); }
+/* Tour final card */
+#tour-tooltip .tour-final {
+  text-align: center;
+}
+#tour-tooltip .tour-final p {
+  margin-bottom: 16px;
+}
+
 /* Search overlay */
 #search-overlay {
   position: fixed;
@@ -2278,6 +2355,7 @@ html.dark-mode .text-highlight { background: rgba(255, 235, 59, 0.15); }
   <div class="sidebar-actions">
     <button id="btn-recustomize">Recustomize</button>
     <button id="btn-search-sidebar">Search</button>
+    <button id="btn-retake-tour" onclick="window._startTour()">Retake Tour</button>
   </div>
   <div class="sidebar-tabs">
     <button class="active" data-tab="chapters">Chapters</button>
@@ -2294,6 +2372,12 @@ html.dark-mode .text-highlight { background: rgba(255, 235, 59, 0.15); }
     <div id="sidebar-notes-bookmarks-list"><div class="snb-empty">No notes or bookmarks yet.</div></div>
   </div>
 </nav>
+
+<!-- GUIDED TOUR OVERLAY -->
+<div id="tour-overlay" class="no-print">
+  <svg id="tour-backdrop" xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" fill="rgba(0,0,0,0.55)"/></svg>
+  <div id="tour-tooltip"></div>
+</div>
 
 <!-- AI ASSISTANT FAB -->
 <button id="ai-fab" class="no-print" aria-label="AI Assistant" title="Ask a question">?</button>
@@ -6504,7 +6588,176 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
     updateGetAheadSection();
     updateNotesBookmarksTab();
     if (window.innerWidth >= 900 && !sidebar.classList.contains('open')) toggleSidebar();
+    // Launch guided tour after first onboarding
+    if (!localStorage.getItem('tour_completed')) {
+      setTimeout(function() { window._startTour(); }, 600);
+    }
   };
+
+  // ==================== GUIDED TOUR ====================
+  (function() {
+    var tourOverlay = document.getElementById('tour-overlay');
+    var tourTooltip = document.getElementById('tour-tooltip');
+    var tourBackdrop = document.getElementById('tour-backdrop');
+    var currentStep = 0;
+
+    var steps = [
+      {
+        selector: '#guide-sidebar',
+        title: 'Step 1 of 6',
+        text: 'This is your navigation. Chapters are grouped into Parts. Check them off as you go. Your progress saves automatically.',
+        position: 'right',
+        prepare: function() {
+          var sb = document.getElementById('guide-sidebar');
+          if (sb && !sb.classList.contains('open')) {
+            sb.classList.add('open');
+            document.getElementById('sidebar-toggle').classList.add('active');
+          }
+        }
+      },
+      {
+        selector: '#rpanel-toggle',
+        title: 'Step 2 of 6',
+        text: 'Open the workspace panel for notes, AI assistant, bookmarks, and quick reference. It lives on the right side of your screen.',
+        position: 'below'
+      },
+      {
+        selector: '#nav-search-btn',
+        title: 'Step 3 of 6',
+        text: 'Search anything in the guide instantly. Press Cmd+K (or Ctrl+K) anytime.',
+        position: 'below'
+      },
+      {
+        selector: '#user-dashboard',
+        title: 'Step 4 of 6',
+        text: 'This is your personalized starting point. It updates based on your profile and shows your recommended path.',
+        position: 'below'
+      },
+      {
+        selector: '#ai-fab',
+        title: 'Step 5 of 6',
+        text: 'Ask the AI assistant any question about AI, Claude, or this guide. It also helps you write better prompts.',
+        position: 'above'
+      },
+      {
+        selector: '#dark-mode-toggle',
+        title: 'Step 6 of 6',
+        text: 'Switch between light and dark mode. Your preference saves automatically.',
+        position: 'below'
+      }
+    ];
+
+    function positionTooltip(rect, pos) {
+      var tt = tourTooltip;
+      var gap = 14;
+      var tw = 340;
+      var style = { top: '', left: '' };
+
+      if (pos === 'right') {
+        style.top = Math.max(10, rect.top + rect.height / 2 - 80) + 'px';
+        style.left = Math.min(rect.right + gap, window.innerWidth - tw - 20) + 'px';
+      } else if (pos === 'below') {
+        style.top = (rect.bottom + gap) + 'px';
+        style.left = Math.max(10, Math.min(rect.left + rect.width / 2 - tw / 2, window.innerWidth - tw - 20)) + 'px';
+      } else if (pos === 'above') {
+        style.left = Math.max(10, Math.min(rect.left + rect.width / 2 - tw / 2, window.innerWidth - tw - 20)) + 'px';
+        style.top = Math.max(10, rect.top - gap - 200) + 'px';
+      }
+
+      tt.style.top = style.top;
+      tt.style.left = style.left;
+    }
+
+    function buildBackdropSVG(rect) {
+      var w = window.innerWidth;
+      var h = window.innerHeight;
+      var pad = 6;
+      var r = 8;
+      var x = Math.max(0, rect.left - pad);
+      var y = Math.max(0, rect.top - pad);
+      var rw = rect.width + pad * 2;
+      var rh = rect.height + pad * 2;
+      tourBackdrop.innerHTML =
+        '<rect width="' + w + '" height="' + h + '" fill="rgba(0,0,0,0.55)"/>' +
+        '<rect x="' + x + '" y="' + y + '" width="' + rw + '" height="' + rh + '" rx="' + r + '" ry="' + r + '" fill="black"/>';
+      tourBackdrop.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:20001;';
+      tourBackdrop.setAttribute('width', w);
+      tourBackdrop.setAttribute('height', h);
+      // Use mask approach for cutout
+      tourBackdrop.innerHTML =
+        '<defs><mask id="tour-mask">' +
+        '<rect width="' + w + '" height="' + h + '" fill="white"/>' +
+        '<rect x="' + x + '" y="' + y + '" width="' + rw + '" height="' + rh + '" rx="' + r + '" ry="' + r + '" fill="black"/>' +
+        '</mask></defs>' +
+        '<rect width="' + w + '" height="' + h + '" fill="rgba(0,0,0,0.55)" mask="url(#tour-mask)"/>';
+    }
+
+    function showStep(idx) {
+      currentStep = idx;
+      if (idx >= steps.length) {
+        showFinalCard();
+        return;
+      }
+      var step = steps[idx];
+      if (step.prepare) step.prepare();
+      var el = document.querySelector(step.selector);
+      if (!el) { showStep(idx + 1); return; }
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      setTimeout(function() {
+        var rect = el.getBoundingClientRect();
+        buildBackdropSVG(rect);
+        tourTooltip.innerHTML =
+          '<div class="tour-step-num">' + step.title + '</div>' +
+          '<div class="tour-text">' + step.text + '</div>' +
+          '<div class="tour-actions">' +
+          '<button class="tour-skip" onclick="window._endTour()">Skip Tour</button>' +
+          '<button class="tour-next-btn" onclick="window._tourNext()">Next</button>' +
+          '</div>';
+        positionTooltip(rect, step.position);
+      }, 200);
+    }
+
+    function showFinalCard() {
+      // Center card, no spotlight
+      tourBackdrop.innerHTML =
+        '<rect width="' + window.innerWidth + '" height="' + window.innerHeight + '" fill="rgba(0,0,0,0.55)"/>';
+      tourBackdrop.setAttribute('width', window.innerWidth);
+      tourBackdrop.setAttribute('height', window.innerHeight);
+      tourTooltip.innerHTML =
+        '<div class="tour-final">' +
+        '<div class="tour-step-num">All Set</div>' +
+        '<p>You are all set. Start with your first recommended chapter, or browse the table of contents. You can always retake this tour from the sidebar.</p>' +
+        '<button class="tour-next-btn" onclick="window._endTour()">Start Reading</button>' +
+        '</div>';
+      tourTooltip.style.top = '50%';
+      tourTooltip.style.left = '50%';
+      tourTooltip.style.transform = 'translate(-50%, -50%)';
+    }
+
+    window._tourNext = function() {
+      tourTooltip.style.transform = '';
+      showStep(currentStep + 1);
+    };
+
+    window._endTour = function() {
+      tourOverlay.classList.remove('active');
+      tourTooltip.style.transform = '';
+      localStorage.setItem('tour_completed', '1');
+    };
+
+    window._startTour = function() {
+      tourTooltip.style.transform = '';
+      tourOverlay.classList.add('active');
+      showStep(0);
+    };
+
+    // Close on Escape
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && tourOverlay.classList.contains('active')) {
+        window._endTour();
+      }
+    });
+  })();
 
   // ==================== SHARE LINKS ====================
   function addShareLinks() {
