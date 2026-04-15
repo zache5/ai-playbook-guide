@@ -132,8 +132,12 @@ h2 {
   letter-spacing: -0.3px;
   border-bottom: 2px solid var(--border);
   padding-bottom: 8px;
+  padding-right: 150px;
   position: relative;
+  scroll-margin-top: 20px;
 }
+
+h3 { scroll-margin-top: 20px; }
 
 h2 .listen-btn {
   position: absolute;
@@ -1999,34 +2003,7 @@ html.dark-mode .ch-badge.optional { background: #334155; color: #94a3b8; }
 #back-to-top-btn.visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
 #back-to-top-btn:hover { background: var(--accent-dark); transform: translateY(-2px); }
 
-#continue-reading-btn {
-  position: fixed;
-  bottom: 24px;
-  left: 76px;
-  z-index: 6000;
-  background: var(--green);
-  color: #fff;
-  border: none;
-  height: 44px;
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  border-radius: 22px;
-  box-shadow: 0 3px 10px var(--shadow);
-  transition: background 0.2s, opacity 0.3s, transform 0.3s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 16px;
-  gap: 6px;
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(10px);
-  white-space: nowrap;
-}
-#continue-reading-btn.visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
-#continue-reading-btn:hover { background: var(--green-dark); transform: translateY(-2px); }
+#continue-reading-btn { display: none !important; }
 
 /* ===== BOOKMARK ICON ON CHAPTER HEADINGS ===== */
 .bookmark-btn {
