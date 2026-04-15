@@ -2698,17 +2698,14 @@ html.dark-mode .callout-try .callout-title { color: #fbbf24; }
   </div>
   <div class="sidebar-tabs" role="tablist" aria-label="Sidebar sections">
     <button class="active" data-tab="chapters" role="tab" aria-selected="true" aria-controls="sidebar-tab-chapters" id="stab-chapters">Chapters</button>
-    <button data-tab="bookmarks" role="tab" aria-selected="false" aria-controls="sidebar-tab-bookmarks" id="stab-bookmarks">Bookmarks</button>
     <button data-tab="notes-bookmarks" role="tab" aria-selected="false" aria-controls="sidebar-tab-notes-bookmarks" id="stab-notes">Notes & Bookmarks</button>
   </div>
   <div id="sidebar-tab-chapters" class="sidebar-tab-content active" role="tabpanel" aria-labelledby="stab-chapters">
     <ul id="sidebar-chapters" role="list" aria-label="Chapter list"></ul>
   </div>
-  <div id="sidebar-tab-bookmarks" class="sidebar-tab-content" role="tabpanel" aria-labelledby="stab-bookmarks">
-    <div id="sidebar-bookmarks-list"><div class="sb-empty">No bookmarks yet. Click the flag icon on any chapter heading to bookmark it.</div></div>
-  </div>
   <div id="sidebar-tab-notes-bookmarks" class="sidebar-tab-content" role="tabpanel" aria-labelledby="stab-notes">
-    <div id="sidebar-notes-bookmarks-list"><div class="snb-empty">No notes or bookmarks yet.</div></div>
+    <div id="sidebar-bookmarks-list"></div>
+    <div id="sidebar-notes-bookmarks-list"><div class="snb-empty">No notes or bookmarks yet. Click the flag icon on any chapter heading to bookmark it, or click "+ Note" on any section.</div></div>
   </div>
 </nav>
 
@@ -7213,12 +7210,28 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
     ttsCurrentUtterance = null;
   }
 
-  function startTTS(h2, btn) {
-    if (!('speechSynthesis' in window)) { alert('Your browser does not support text-to-speech.'); return; }
-    if (ttsCurrentBtn === btn) { stopTTS(); return; }
-    stopTTS();
-    var text = h2.textContent.replace('Share', '').replace('Listen', '').replace('Stop', '') + '. ' + getChapterText(h2);
-    var utterance = new SpeechSynthesisUtterance(text);
+  var ttsChunks = [];
+  var ttsChunkIndex = 0;
+
+  function chunkText(text, maxLen) {
+    var chunks = [];
+    var sentences = text.match(/[^.!?]+[.!?]+\s*/g) || [text];
+    var current = '';
+    for (var i = 0; i < sentences.length; i++) {
+      if ((current + sentences[i]).length > maxLen && current.length > 0) {
+        chunks.push(current.trim());
+        current = sentences[i];
+      } else {
+        current += sentences[i];
+      }
+    }
+    if (current.trim()) chunks.push(current.trim());
+    return chunks;
+  }
+
+  function speakNextChunk() {
+    if (ttsChunkIndex >= ttsChunks.length) { stopTTS(); return; }
+    var utterance = new SpeechSynthesisUtterance(ttsChunks[ttsChunkIndex]);
     utterance.rate = 1.0;
     utterance.pitch = 1.0;
     var voices = window.speechSynthesis.getVoices();
@@ -7226,13 +7239,23 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
       || voices.find(function(v) { return v.lang.startsWith('en') && v.localService; })
       || voices.find(function(v) { return v.lang.startsWith('en'); });
     if (preferred) utterance.voice = preferred;
-    utterance.onend = function() { stopTTS(); };
+    utterance.onend = function() { ttsChunkIndex++; speakNextChunk(); };
     utterance.onerror = function() { stopTTS(); };
     ttsCurrentUtterance = utterance;
+    window.speechSynthesis.speak(utterance);
+  }
+
+  function startTTS(h2, btn) {
+    if (!('speechSynthesis' in window)) { alert('Your browser does not support text-to-speech.'); return; }
+    if (ttsCurrentBtn === btn) { stopTTS(); return; }
+    stopTTS();
+    var text = h2.textContent.replace('Share', '').replace('Listen', '').replace('Stop', '') + '. ' + getChapterText(h2);
+    ttsChunks = chunkText(text, 2000);
+    ttsChunkIndex = 0;
     ttsCurrentBtn = btn;
     btn.textContent = 'Stop';
     btn.classList.add('speaking');
-    window.speechSynthesis.speak(utterance);
+    speakNextChunk();
   }
 
   function addListenButtons() {
