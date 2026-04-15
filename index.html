@@ -1954,7 +1954,7 @@ html.dark-mode .ch-badge.optional { background: #334155; color: #94a3b8; }
 @media print {
   #reading-progress, #guide-sidebar, #sidebar-toggle, #sidebar-overlay,
   #onboarding-overlay, #search-overlay, #ai-fab, #ai-panel, #toast-container,
-  #top-nav, #user-dashboard, #shortcuts-modal, #back-to-top-btn,
+  #top-nav, #user-dashboard, #shortcuts-modal, #back-to-top-btn, #continue-reading-btn,
   #right-panel, #rpanel-overlay,
   .persona-callout, .sidebar-actions, .ch-badge, .share-link, .note-btn,
   .copy-btn, .user-note { display: none !important; }
@@ -1999,6 +1999,35 @@ html.dark-mode .ch-badge.optional { background: #334155; color: #94a3b8; }
 }
 #back-to-top-btn.visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
 #back-to-top-btn:hover { background: var(--accent-dark); transform: translateY(-2px); }
+
+#continue-reading-btn {
+  position: fixed;
+  bottom: 24px;
+  left: 76px;
+  z-index: 6000;
+  background: var(--green);
+  color: #fff;
+  border: none;
+  height: 44px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 22px;
+  box-shadow: 0 3px 10px var(--shadow);
+  transition: background 0.2s, opacity 0.3s, transform 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  gap: 6px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(10px);
+  white-space: nowrap;
+}
+#continue-reading-btn.visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
+#continue-reading-btn:hover { background: var(--green-dark); transform: translateY(-2px); }
 
 /* ===== BOOKMARK ICON ON CHAPTER HEADINGS ===== */
 .bookmark-btn {
@@ -2314,6 +2343,7 @@ html.dark-mode .text-highlight { background: rgba(255, 235, 59, 0.15); }
 
 <!-- BACK TO TOP BUTTON -->
 <button id="back-to-top-btn" class="no-print" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top" title="Back to top">&#8593;</button>
+<button id="continue-reading-btn" class="no-print" aria-label="Continue reading">&#9654; Continue</button>
 
 <!-- TOP NAV BAR -->
 <div id="top-nav" class="no-print">
@@ -3402,7 +3432,7 @@ A practical framework for catching AI mistakes before they become your mistakes.
 <ul>
 <li><strong>Precise math.</strong> Claude can reason about math concepts, but it sometimes makes arithmetic errors on complex calculations. For anything financial or mission-critical, verify the numbers with a calculator or spreadsheet.</li>
 <li><strong>Very recent events.</strong> Anything that happened after Claude's training cutoff is unknown territory. Claude will sometimes try to answer anyway, which leads to confident-sounding wrong answers.</li>
-<li><strong>Highly specialized niche domains.</strong> Claude knows a lot about a lot, but it is not an expert in extremely specialized fields like rare medical conditions, obscure legal jurisdictions, or cutting-edge research published last month.</li>
+<li><strong>Highly specialized niche domains.</strong> Claude knows a lot about a lot, but it is not an expert in extremely specialized fields like rare medical conditions, obscure legal jurisdictions, or very recent research published last month.</li>
 <li><strong>Very long documents.</strong> Claude now supports up to 1 million tokens of context (roughly 700,000 words), which is enormous. But even with this massive window, performance can degrade toward the edges, and very large inputs still cost more tokens from your plan allowance.</li>
 <li><strong>Counting and spatial reasoning.</strong> Ask Claude how many times the letter "r" appears in "strawberry" and it might get it wrong. These seem like easy tasks, but they are actually hard for language models.</li>
 </ul>
@@ -4485,7 +4515,7 @@ This section is for educational purposes. Career outcomes depend on many factors
 <h3>How to stay ahead</h3>
 
 <ol>
-<li><strong>Build with AI, not just use it.</strong> Using Claude to check grammar is fine. Building a system where Claude handles your email triage, generates reports, and manages your calendar is where the real leverage is.</li>
+<li><strong>Build with AI, not just use it.</strong> Using Claude to check grammar is fine. Building a system where Claude handles your email triage, generates reports, and manages your calendar is where the real value is.</li>
 <li><strong>Stay current.</strong> Follow Anthropic's blog, OpenAI's announcements, and AI newsletters. The landscape changes monthly.</li>
 <li><strong>Teach others.</strong> The best way to solidify your knowledge is to help someone else learn. Become the AI person in your workplace or community.</li>
 <li><strong>Experiment constantly.</strong> Try new tools. Break things. The cost of experimenting is low and the upside is high.</li>
@@ -4856,7 +4886,7 @@ Everything. A personalized AI profile, a verification framework, eight workflows
 <li><strong>Be specific.</strong> "Write me an email" gets generic output. "Write a follow-up email to a client who ghosted my proposal, warm but direct, under 100 words" gets something you can actually send.</li>
 <li><strong>Iterate, do not accept.</strong> The first response is a draft. Give specific feedback: "Make the opening more direct" or "Cut 30% of the word count." Claude gets dramatically better with direction.</li>
 <li><strong>Verify important claims.</strong> AI can state wrong things confidently. For anything you will stake your reputation on, check the key facts independently.</li>
-<li><strong>Use Claude Code for real work.</strong> The browser chat is great for conversations. Claude Code builds things, automates tasks, and connects to your life. That is where the real leverage lives.</li>
+<li><strong>Use Claude Code for real work.</strong> The browser chat is great for conversations. Claude Code builds things, automates tasks, and connects to your life. That is where the real value is.</li>
 </ol>
 </div>
 
@@ -5885,6 +5915,22 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
     document.getElementById('sidebar-progress-fill').style.width = ((completed / CHAPTERS.length) * 100) + '%';
     document.getElementById('sidebar-progress-text').textContent = completed + ' of ' + CHAPTERS.length + ' sections complete';
 
+    // Check for essential path completion
+    var profile = getProfile();
+    if (profile && !localStorage.getItem('aiplaybook_essential_done')) {
+      var allPersonas = (profile.personas && profile.personas.length > 0) ? profile.personas : ['other'];
+      var mergedEssential = [];
+      allPersonas.forEach(function(pk) {
+        var m = PERSONA_MAP[pk] || PERSONA_MAP['other'];
+        m.essential.forEach(function(id) { if (mergedEssential.indexOf(id) === -1) mergedEssential.push(id); });
+      });
+      var essentialDone = mergedEssential.every(function(id) { return progress[id]; });
+      if (essentialDone && mergedEssential.length > 0) {
+        localStorage.setItem('aiplaybook_essential_done', 'true');
+        showToast('Essential Path Complete', 'You have finished all your essential chapters. The recommended chapters are next, or explore whatever interests you.');
+      }
+    }
+
     // Check for full completion
     if (completed === CHAPTERS.length && !localStorage.getItem('aiplaybook_completed')) {
       localStorage.setItem('aiplaybook_completed', 'true');
@@ -6085,6 +6131,15 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
       '</div></div>' +
       '<strong style="font-size:14px;">Your recommended chapters:</strong>' +
       '<div class="dash-path">' + essentialLinks + '</div>';
+
+    // Show reading time tracker
+    var totalMinutes = parseInt(localStorage.getItem('aiplaybook_reading_minutes') || '0', 10);
+    if (totalMinutes > 0) {
+      var hours = Math.floor(totalMinutes / 60);
+      var mins = totalMinutes % 60;
+      var timeStr = hours > 0 ? hours + 'h ' + mins + 'm' : mins + ' min';
+      body.innerHTML += '<div style="margin-top:14px;padding:10px 14px;background:var(--bg-code);border-radius:8px;font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:8px;"><span style="font-size:16px;">&#9201;</span> You have spent approximately ' + timeStr + ' reading this guide.</div>';
+    }
 
     var collapsed = localStorage.getItem(DASH_KEY) === 'true';
     if (collapsed) body.classList.add('collapsed');
@@ -6494,28 +6549,35 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
       case 5:
         var roles = wizardState.personas.map(function(p) { return PERSONA_LABELS[p] || p; }).join(', ');
         var goalLabel = wizardState.goals.map(function(g) { return GOAL_LABELS[g] || g; }).join(', ') || 'Not set';
-        var personaKey = wizardState.personas[0] || 'other';
-        var map = PERSONA_MAP[personaKey] || PERSONA_MAP['other'];
+        var allP = wizardState.personas.length > 0 ? wizardState.personas : ['other'];
+        var mergedEss = [];
+        var mergedRec = [];
+        allP.forEach(function(pk) {
+          var m = PERSONA_MAP[pk] || PERSONA_MAP['other'];
+          m.essential.forEach(function(id) { if (mergedEss.indexOf(id) === -1) mergedEss.push(id); });
+          m.recommended.forEach(function(id) { if (mergedRec.indexOf(id) === -1 && mergedEss.indexOf(id) === -1) mergedRec.push(id); });
+        });
         html = '<h2>Your personalized path is ready</h2>' +
           '<div class="onboarding-summary">' +
           (wizardState.name ? '<strong>Name:</strong> ' + wizardState.name + '<br>' : '') +
           '<strong>Roles:</strong> ' + (roles || 'Not set') + '<br>' +
           '<strong>Goals:</strong> ' + goalLabel + '<br>' +
-          '<strong>Essential chapters:</strong> ' + map.essential.length + '<br>' +
-          '<strong>Recommended:</strong> ' + map.recommended.length +
+          '<strong>Essential chapters:</strong> ' + mergedEss.length + '<br>' +
+          '<strong>Recommended:</strong> ' + mergedRec.length +
           '</div>' +
           '<p>We have highlighted the chapters most relevant to you and marked optional sections you can skip.</p>' +
           '<button class="onboarding-btn" onclick="window._wizardFinish()">Start Reading</button>';
         break;
     }
     onboardingCard.innerHTML = html;
-    if (wizardState.step === 2) bindCheckListeners();
-    if (wizardState.step >= 3 && wizardState.step <= 4) bindRadioListeners();
+    if (wizardState.step === 2 || wizardState.step === 4) bindCheckListeners();
+    if (wizardState.step === 3) bindRadioListeners();
   }
 
   function makeCheck(group, value, label) {
-    var checked = wizardState.personas.indexOf(value) !== -1 ? ' checked' : '';
-    return '<label><input type="checkbox" name="' + group + '" value="' + value + '"' + checked + '> ' + label + '</label>';
+    var arr = group === 'goals' ? wizardState.goals : wizardState.personas;
+    var checked = arr.indexOf(value) !== -1 ? ' checked' : '';
+    return '<label class="' + (checked ? 'selected' : '') + '"><input type="checkbox" name="' + group + '" value="' + value + '"' + checked + '> ' + label + '</label>';
   }
   function makeRadio(group, value, label) {
     return '<label><input type="radio" name="' + group + '" value="' + value + '"> ' + label + '</label>';
@@ -7524,36 +7586,25 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
     var section = document.getElementById('get-ahead-personalized');
     var content = document.getElementById('get-ahead-content');
     if (!section || !content) return;
-    var personaKey = profile.personas && profile.personas[0] ? profile.personas[0] : null;
+    var personas = profile.personas && profile.personas.length > 0 ? profile.personas : [];
     var goals = profile.goals || [];
-    if (!personaKey && goals.length === 0) return;
+    if (personas.length === 0 && goals.length === 0) return;
     section.style.display = 'block';
     var html = '';
-    if (personaKey === 'business') {
-      html += '<h4>For Business Owners</h4><ul>';
-      html += '<li><strong>Automate first.</strong> Identify the 3 tasks you or your team spend the most time on every week. Set up Claude workflows for each one. Start with email triage, report generation, and customer communication.</li>';
-      html += '<li><strong>Build a competitive moat.</strong> Most of your competitors are not using AI yet. The ones who are get faster proposals, better customer response times, and more consistent output. Be the one who adapts first.</li>';
-      html += '<li><strong>Efficiency compounds.</strong> Saving 5 hours a week is 260 hours a year. That is 6.5 full work weeks. Use those hours to grow your business, not just maintain it.</li>';
-      html += '</ul>';
-    } else if (personaKey === 'student') {
-      html += '<h4>For Students</h4><ul>';
-      html += '<li><strong>Build a portfolio now.</strong> Create AI-assisted projects you can show employers. A website, a data analysis, an automated workflow. These demonstrate skills that matter.</li>';
-      html += '<li><strong>Develop skills, not shortcuts.</strong> Use AI to learn harder material, not to skip learning. Have Claude explain concepts, quiz you, and create practice problems. The goal is understanding, not output.</li>';
-      html += '<li><strong>Stand out.</strong> When everyone in your class is submitting similar work, the student who uses AI to go deeper, research further, and present better is the one who gets noticed.</li>';
-      html += '</ul>';
-    } else if (personaKey === 'professional') {
-      html += '<h4>For Working Professionals</h4><ul>';
-      html += '<li><strong>Become the AI person on your team.</strong> Every team needs someone who understands AI tools. Be that person. Volunteer for AI-related projects, share useful prompts, and help colleagues get started.</li>';
-      html += '<li><strong>Upgrade your output.</strong> Better emails, faster reports, sharper analysis. AI does not replace your expertise. It amplifies it. The professional who produces A-grade work in half the time gets promoted.</li>';
-      html += '<li><strong>Document your AI skills.</strong> Add AI proficiency to your resume, LinkedIn, and performance reviews. It is a concrete, in-demand skill that differentiates you.</li>';
-      html += '</ul>';
-    } else if (personaKey === 'creative') {
-      html += '<h4>For Creatives</h4><ul>';
-      html += '<li><strong>Scale your output.</strong> AI handles the admin, proposals, invoicing, and client communication. You focus on the creative work that pays and fulfills you.</li>';
-      html += '<li><strong>Remove busywork.</strong> For every hour of creative work, most creatives spend 2-3 hours on non-creative tasks. Cut that ratio in half with AI-assisted workflows.</li>';
-      html += '<li><strong>Find more clients.</strong> Use AI to generate marketing content, build your online presence, and respond to inquiries faster. More visibility and faster response times mean more bookings.</li>';
-      html += '</ul>';
-    } else {
+    var personaBlocks = {
+      business: '<h4>For Business Owners</h4><ul><li><strong>Automate first.</strong> Identify the 3 tasks you or your team spend the most time on every week. Set up Claude workflows for each one. Start with email triage, report generation, and customer communication.</li><li><strong>Build a competitive moat.</strong> Most of your competitors are not using AI yet. The ones who are get faster proposals, better customer response times, and more consistent output. Be the one who adapts first.</li><li><strong>Efficiency compounds.</strong> Saving 5 hours a week is 260 hours a year. That is 6.5 full work weeks. Use those hours to grow your business, not just maintain it.</li></ul>',
+      student: '<h4>For Students</h4><ul><li><strong>Build a portfolio now.</strong> Create AI-assisted projects you can show employers. A website, a data analysis, an automated workflow. These demonstrate skills that matter.</li><li><strong>Develop skills, not shortcuts.</strong> Use AI to learn harder material, not to skip learning. Have Claude explain concepts, quiz you, and create practice problems. The goal is understanding, not output.</li><li><strong>Stand out.</strong> When everyone in your class is submitting similar work, the student who uses AI to go deeper, research further, and present better is the one who gets noticed.</li></ul>',
+      professional: '<h4>For Working Professionals</h4><ul><li><strong>Become the AI person on your team.</strong> Every team needs someone who understands AI tools. Be that person. Volunteer for AI-related projects, share useful prompts, and help colleagues get started.</li><li><strong>Upgrade your output.</strong> Better emails, faster reports, sharper analysis. AI does not replace your expertise. It amplifies it. The professional who produces A-grade work in half the time gets promoted.</li><li><strong>Document your AI skills.</strong> Add AI proficiency to your resume, LinkedIn, and performance reviews. It is a concrete, in-demand skill that differentiates you.</li></ul>',
+      creative: '<h4>For Creatives</h4><ul><li><strong>Scale your output.</strong> AI handles the admin, proposals, invoicing, and client communication. You focus on the creative work that pays and fulfills you.</li><li><strong>Remove busywork.</strong> For every hour of creative work, most creatives spend 2-3 hours on non-creative tasks. Cut that ratio in half with AI-assisted workflows.</li><li><strong>Find more clients.</strong> Use AI to generate marketing content, build your online presence, and respond to inquiries faster. More visibility and faster response times mean more bookings.</li></ul>',
+      educator: '<h4>For Educators</h4><ul><li><strong>Differentiate instantly.</strong> Build lesson plans and materials for multiple student levels in the time it takes to do one manually.</li><li><strong>Design AI-proof assessments.</strong> Create assignments that work with AI, not against it. Focus on process, reasoning, and personal reflection.</li><li><strong>Free up planning time.</strong> Let AI handle the repetitive parts of lesson prep so you can focus on teaching and student relationships.</li></ul>',
+      healthcare: '<h4>For Healthcare Workers</h4><ul><li><strong>Documentation, not diagnosis.</strong> Use AI for administrative writing, continuing education, and patient education materials. Never for clinical decisions.</li><li><strong>Read Chapter 25 first.</strong> Security and privacy are non-negotiable in healthcare. Understand the boundaries before you start.</li><li><strong>Free up clinical time.</strong> The less time you spend on paperwork, the more time you spend on patients. AI handles the former.</li></ul>',
+      technical: '<h4>For Developers</h4><ul><li><strong>Skip to Claude Code.</strong> Chapters 12-20 are where your ROI lives. MCP servers, automation, and 24/7 systems.</li><li><strong>Build real infrastructure.</strong> Claude Code is not a toy. Use it for real applications, monitoring systems, and automated pipelines.</li><li><strong>Contribute back.</strong> Build MCP servers, share configurations, and help shape how Claude Code evolves.</li></ul>'
+    };
+    var matched = false;
+    personas.forEach(function(pk) {
+      if (personaBlocks[pk]) { html += personaBlocks[pk]; matched = true; }
+    });
+    if (!matched) {
       html += '<h4>Your Personalized Plan</h4><ul>';
       html += '<li><strong>Start with your biggest time drain.</strong> Whatever task you spend the most time on each week, explore how AI can help. Even a 30% improvement there saves you hours.</li>';
       html += '<li><strong>Build one workflow.</strong> Pick a repeating task and turn it into an AI-assisted system. Once you have one working, you will see opportunities everywhere.</li>';
@@ -8102,7 +8153,69 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
     } else {
       if (window.innerWidth >= 900) toggleSidebar();
     }
+
+    // Continue Reading button
+    var continueBtn = document.getElementById('continue-reading-btn');
+    function updateContinueBtn() {
+      var profile = getProfile();
+      if (!profile) { continueBtn.classList.remove('visible'); return; }
+      var progress = getProgress();
+      var allPersonas = (profile.personas && profile.personas.length > 0) ? profile.personas : ['other'];
+      var mergedEssential = [];
+      allPersonas.forEach(function(pk) {
+        var m = PERSONA_MAP[pk] || PERSONA_MAP['other'];
+        m.essential.forEach(function(id) { if (mergedEssential.indexOf(id) === -1) mergedEssential.push(id); });
+      });
+      var nextChapter = null;
+      for (var i = 0; i < CHAPTERS.length; i++) {
+        if (mergedEssential.indexOf(CHAPTERS[i].id) !== -1 && !progress[CHAPTERS[i].id]) {
+          nextChapter = CHAPTERS[i];
+          break;
+        }
+      }
+      if (!nextChapter) {
+        // All essential done, find next unread from recommended
+        for (var i = 0; i < CHAPTERS.length; i++) {
+          if (!progress[CHAPTERS[i].id]) { nextChapter = CHAPTERS[i]; break; }
+        }
+      }
+      if (nextChapter && window.scrollY > 600) {
+        var shortTitle = nextChapter.title.replace(/^Chapter \d+: /, '');
+        if (shortTitle.length > 20) shortTitle = shortTitle.substring(0, 18) + '...';
+        continueBtn.textContent = '\u25B6 ' + shortTitle;
+        continueBtn.onclick = function() {
+          var target = document.getElementById(nextChapter.id);
+          if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        };
+        continueBtn.classList.add('visible');
+      } else {
+        continueBtn.classList.remove('visible');
+      }
+    }
+    window.addEventListener('scroll', updateContinueBtn, { passive: true });
+    updateContinueBtn();
   }
+
+  // Reading time tracker - count active reading minutes
+  (function() {
+    var READING_KEY = 'aiplaybook_reading_minutes';
+    var LAST_TICK_KEY = 'aiplaybook_last_tick';
+    var active = true;
+    document.addEventListener('visibilitychange', function() { active = !document.hidden; });
+    setInterval(function() {
+      if (active && document.hasFocus()) {
+        var now = Date.now();
+        var lastTick = parseInt(localStorage.getItem(LAST_TICK_KEY) || '0', 10);
+        // Only count if less than 2 minutes since last tick (prevents counting idle time)
+        if (lastTick > 0 && (now - lastTick) < 120000) {
+          var mins = parseInt(localStorage.getItem(READING_KEY) || '0', 10);
+          localStorage.setItem(READING_KEY, String(mins + 1));
+        }
+        localStorage.setItem(LAST_TICK_KEY, String(now));
+      }
+    }, 60000); // every minute
+    localStorage.setItem(LAST_TICK_KEY, String(Date.now()));
+  })();
 
   // Reading progress bar
   function initReadingProgress() {
