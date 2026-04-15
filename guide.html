@@ -2030,15 +2030,16 @@ html.dark-mode .ch-badge.optional { background: #334155; color: #94a3b8; }
 
 /* ===== BOOKMARK ICON ON CHAPTER HEADINGS ===== */
 .bookmark-btn {
-  display: inline-block;
+  position: absolute;
+  top: 50%;
+  right: 70px;
+  transform: translateY(-50%);
   font-size: 0.55em;
   color: var(--text-muted);
   cursor: pointer;
-  margin-left: 8px;
-  padding: 2px 6px;
+  padding: 4px 8px;
   border-radius: 4px;
   border: 1px solid var(--border);
-  vertical-align: middle;
   font-weight: 500;
   background: var(--bg);
   opacity: 0;
