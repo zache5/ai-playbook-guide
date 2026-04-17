@@ -8760,8 +8760,8 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
           }
           nextEl = nextEl.nextElementSibling;
         }
-        // Must scroll past the section AND spend at least 10 seconds reading it
-        if (scrollBottom >= sectionEnd + 100 && (subTimeTracker[h3.id] || 0) >= 10) {
+        // Must scroll past the section AND spend at least 3 seconds reading it
+        if (scrollBottom >= sectionEnd && (subTimeTracker[h3.id] || 0) >= 3) {
           subProgress[h3.id] = true;
           changed = true;
           // Update the check in sidebar
