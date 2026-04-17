@@ -5462,10 +5462,16 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
 </form>
 </div>
 
-<div style="background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 24px;">
-<h3 style="margin-top: 0; margin-bottom: 8px; font-size: 13pt;">Join the Community</h3>
-<p style="font-size: 0.92em; color: var(--text-secondary); margin-bottom: 16px; line-height: 1.55;">Ask questions, share prompts, meet other learners. Free.</p>
-<a href="https://discord.gg/theaiplaybook" target="_blank" style="display: inline-block; padding: 8px 20px; background: #5865F2; color: white; border-radius: 6px; font-size: 0.88em; font-weight: 600; text-decoration: none;">Join Discord</a>
+<div id="discord-section" style="background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 24px;">
+<h3 style="margin-top: 0; margin-bottom: 8px; font-size: 13pt;">Private Discord Community</h3>
+<p style="font-size: 0.92em; color: var(--text-secondary); margin-bottom: 16px; line-height: 1.55;">Connect with other learners, ask questions, share prompts, and stay current as AI evolves.</p>
+<div id="discord-locked" style="display:block;">
+<p style="font-size:0.85em;color:var(--text-muted);margin-bottom:8px;">Complete the course to unlock your Discord invite.</p>
+<div style="background:var(--bg-code);border-radius:6px;padding:8px 16px;font-size:0.85em;color:var(--text-muted);">
+<span id="discord-progress-text">0</span> of <span id="discord-total-text">26</span> chapters complete
+</div>
+</div>
+<a id="discord-link" href="https://discord.gg/theaiplaybook" target="_blank" style="display:none;padding:8px 20px;background:#5865F2;color:white;border-radius:6px;font-size:0.88em;font-weight:600;text-decoration:none;">Join Discord</a>
 </div>
 
 </div>
@@ -8623,12 +8629,24 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
   (function() {
     var completed = {};
     var chapterEls = [];
+    var timeInChapter = {}; // track seconds spent in each chapter
 
-    // Build list of chapter elements and their end positions
     CHAPTERS.forEach(function(ch) {
       var el = document.getElementById(ch.id);
       if (el) chapterEls.push({ id: ch.id, el: el });
     });
+
+    // Track which chapter is currently being read
+    setInterval(function() {
+      var scrollMid = window.scrollY + window.innerHeight / 2;
+      for (var i = chapterEls.length - 1; i >= 0; i--) {
+        if (chapterEls[i].el.offsetTop <= scrollMid) {
+          var id = chapterEls[i].id;
+          timeInChapter[id] = (timeInChapter[id] || 0) + 1;
+          break;
+        }
+      }
+    }, 1000);
 
     function checkChapterCompletion() {
       var scrollBottom = window.scrollY + window.innerHeight;
@@ -8639,21 +8657,17 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
         var ch = chapterEls[i];
         if (progress[ch.id] || completed[ch.id]) continue;
 
-        // Find the end of this chapter (start of next chapter or next HR)
         var nextEl = i + 1 < chapterEls.length ? chapterEls[i + 1].el : null;
         var chapterEnd = nextEl ? nextEl.offsetTop : document.body.scrollHeight;
-
-        // Mark complete when user has scrolled past 85% of the chapter
         var chapterStart = ch.el.offsetTop;
         var chapterHeight = chapterEnd - chapterStart;
         var threshold = chapterStart + chapterHeight * 0.85;
 
-        if (scrollBottom >= threshold) {
+        // Only mark complete if scrolled past 85% AND spent at least 30 seconds reading
+        if (scrollBottom >= threshold && (timeInChapter[ch.id] || 0) >= 30) {
           completed[ch.id] = true;
           progress[ch.id] = true;
           changed = true;
-          // Update checkbox in sidebar
-          var cb = document.querySelector('#sidebar-chapters input[type="checkbox"]');
           var allCbs = document.querySelectorAll('#sidebar-chapters input[type="checkbox"]');
           allCbs.forEach(function(box) {
             var link = box.nextElementSibling;
@@ -8661,7 +8675,6 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
               box.checked = true;
             }
           });
-          // Show milestone toast if applicable
           if (MILESTONES[ch.id]) showToast(MILESTONES[ch.id].title, MILESTONES[ch.id].msg);
         }
       }
@@ -8710,6 +8723,27 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
     }
 
     window.addEventListener('scroll', function() { checkChapterCompletion(); checkSubSectionCompletion(); }, { passive: true });
+  })();
+
+  // ==================== DISCORD GATE ====================
+  (function() {
+    function updateDiscordGate() {
+      var progress = getProgress();
+      var done = 0;
+      CHAPTERS.forEach(function(ch) { if (progress[ch.id]) done++; });
+      var progText = document.getElementById('discord-progress-text');
+      var totalText = document.getElementById('discord-total-text');
+      if (progText) progText.textContent = done;
+      if (totalText) totalText.textContent = CHAPTERS.length;
+      if (done >= CHAPTERS.length) {
+        var locked = document.getElementById('discord-locked');
+        var link = document.getElementById('discord-link');
+        if (locked) locked.style.display = 'none';
+        if (link) link.style.display = 'inline-block';
+      }
+    }
+    updateDiscordGate();
+    window.addEventListener('scroll', updateDiscordGate, { passive: true });
   })();
 
   // Reading time tracker - count active reading minutes
