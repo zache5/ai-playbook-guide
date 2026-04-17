@@ -170,13 +170,11 @@ h3 {
 }
 
 h3 .note-btn {
-  display: inline-block;
+  display: none;
   font-size: 0.7em;
   color: var(--text-muted);
   cursor: pointer;
   margin-left: 8px;
-  opacity: 0;
-  transition: opacity 0.2s;
   padding: 2px 6px;
   border-radius: 4px;
   border: 1px solid var(--border);
@@ -184,7 +182,7 @@ h3 .note-btn {
   font-weight: 500;
   background: var(--bg);
 }
-h3:hover .note-btn { opacity: 1; }
+h3:hover .note-btn { display: inline-block; }
 h3 .note-btn:hover { color: var(--accent); border-color: var(--accent); }
 
 .user-note {
@@ -6228,19 +6226,30 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
               picks.push(subheadings[step]);
               picks.push(subheadings[step * 2]);
             }
+            var subProgress = JSON.parse(localStorage.getItem('aiplaybook_sub_progress') || '{}');
             picks.forEach(function(h3, idx) {
               if (!h3.id) h3.id = ch.id + '-s' + idx;
               var subLi = document.createElement('li');
-              subLi.style.cssText = 'padding-left:44px;font-size:0.82em;border-bottom:none;min-height:28px;';
+              subLi.style.cssText = 'padding-left:40px;font-size:0.82em;border-bottom:none;min-height:28px;display:flex;align-items:center;gap:6px;';
+              var subCheck = document.createElement('span');
+              subCheck.className = 'sub-check';
+              subCheck.setAttribute('data-sub-id', h3.id);
+              subCheck.style.cssText = 'font-size:11px;width:16px;height:16px;border-radius:3px;border:1.5px solid var(--border);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;';
+              if (subProgress[h3.id]) {
+                subCheck.textContent = '\u2713';
+                subCheck.style.color = 'var(--green)';
+                subCheck.style.borderColor = 'var(--green)';
+              }
               var subA = document.createElement('a');
               subA.href = '#' + h3.id;
-              var text = h3.textContent.substring(0, 35);
-              if (h3.textContent.length > 35) text += '...';
-              subA.textContent = '\u2514 ' + text;
-              subA.style.cssText = 'color:var(--text-muted);font-weight:400;';
+              var text = h3.textContent.substring(0, 32);
+              if (h3.textContent.length > 32) text += '...';
+              subA.textContent = text;
+              subA.style.cssText = 'color:var(--text-muted);font-weight:400;text-decoration:none;';
               subA.addEventListener('click', function() {
                 if (window.innerWidth < 900) toggleSidebar();
               });
+              subLi.appendChild(subCheck);
               subLi.appendChild(subA);
               chapterContainer.appendChild(subLi);
             });
@@ -8651,10 +8660,44 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
       }
     }
 
-    window.addEventListener('scroll', checkChapterCompletion, { passive: true });
-  })();
+    // Also track sub-section completion
+    function checkSubSectionCompletion() {
+      var scrollBottom = window.scrollY + window.innerHeight;
+      var subProgress = JSON.parse(localStorage.getItem('aiplaybook_sub_progress') || '{}');
+      var changed = false;
 
-  // Sub-chapter navigation is built into the sidebar (see buildSidebar)
+      document.querySelectorAll('h3[id]').forEach(function(h3) {
+        if (subProgress[h3.id]) return;
+        // Find next h3 or h2
+        var nextEl = h3.nextElementSibling;
+        var sectionEnd = h3.offsetTop + 500; // default
+        while (nextEl) {
+          if (nextEl.tagName === 'H3' || nextEl.tagName === 'H2') {
+            sectionEnd = nextEl.offsetTop;
+            break;
+          }
+          nextEl = nextEl.nextElementSibling;
+        }
+        if (scrollBottom >= sectionEnd - 50) {
+          subProgress[h3.id] = true;
+          changed = true;
+          // Update the check in sidebar
+          var check = document.querySelector('.sub-check[data-sub-id="' + h3.id + '"]');
+          if (check) {
+            check.textContent = '\u2713';
+            check.style.color = 'var(--green)';
+            check.style.borderColor = 'var(--green)';
+          }
+        }
+      });
+
+      if (changed) {
+        localStorage.setItem('aiplaybook_sub_progress', JSON.stringify(subProgress));
+      }
+    }
+
+    window.addEventListener('scroll', function() { checkChapterCompletion(); checkSubSectionCompletion(); }, { passive: true });
+  })();
 
   // Reading time tracker - count active reading minutes
   (function() {
