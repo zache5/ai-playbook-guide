@@ -6174,6 +6174,19 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
         cb.addEventListener('change', function() {
           var p = getProgress();
           p[ch.id] = cb.checked;
+          // Sync sub-chapter progress
+          var subProg = JSON.parse(localStorage.getItem('aiplaybook_sub_progress') || '{}');
+          var chEl2 = document.getElementById(ch.id);
+          if (chEl2) {
+            var sib2 = chEl2.nextElementSibling;
+            while (sib2 && sib2.tagName !== 'H2') {
+              if (sib2.tagName === 'H3' && sib2.id) {
+                subProg[sib2.id] = cb.checked;
+              }
+              sib2 = sib2.nextElementSibling;
+            }
+            localStorage.setItem('aiplaybook_sub_progress', JSON.stringify(subProg));
+          }
           saveProgress(p);
           updateProgressBar();
           buildSidebar(); // Rebuild to update group counts
@@ -6249,8 +6262,10 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
               }
               var subA = document.createElement('a');
               subA.href = '#' + h3.id;
-              var text = h3.textContent.substring(0, 35);
-              if (h3.textContent.length > 35) text += '...';
+              var rawText = h3.childNodes[0] ? h3.childNodes[0].textContent : h3.textContent;
+              rawText = rawText.replace('+ Note','').replace('Edit note','').trim();
+              var text = rawText.substring(0, 35);
+              if (rawText.length > 35) text += '...';
               subA.textContent = text;
               subA.style.cssText = 'color:var(--text-muted);font-weight:400;text-decoration:none;font-size:12px;';
               subA.addEventListener('click', function(e) {
@@ -7073,10 +7088,11 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
         position: 'below'
       },
       {
-        selector: '#user-dashboard',
+        selector: '#user-dashboard .dash-header',
         title: 'Step 4 of 6',
         text: 'This is your personalized starting point. It updates based on your profile and shows your recommended path.',
-        position: 'below'
+        position: 'below',
+        prepare: function() { window.scrollTo(0, 0); }
       },
       {
         selector: '#ai-fab',
