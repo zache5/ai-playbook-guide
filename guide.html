@@ -7104,8 +7104,8 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
       tourTooltip.innerHTML =
         '<div class="tour-final">' +
         '<div class="tour-step-num">All Set</div>' +
-        '<p>You are all set. Start with your first recommended chapter, or browse the table of contents. You can always retake this tour from the sidebar.</p>' +
-        '<button class="tour-next-btn" onclick="window._endTour()">Start Reading</button>' +
+        '<p>You are all set. Click below to jump straight into Chapter 1, or browse the table of contents in the sidebar. You can retake this tour anytime.</p>' +
+        '<button class="tour-next-btn" onclick="window._endTour();document.getElementById(\'ch1\').scrollIntoView({behavior:\'smooth\'});">Start Chapter 1</button>' +
         '</div>';
       tourTooltip.style.top = '50%';
       tourTooltip.style.left = '50%';
