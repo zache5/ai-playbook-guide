@@ -6207,6 +6207,45 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
         }
 
         chapterContainer.appendChild(li);
+
+        // Add sub-chapters for longer chapters (3+ h3 sections)
+        var chEl = document.getElementById(ch.id);
+        if (chEl) {
+          var subheadings = [];
+          var sib = chEl.nextElementSibling;
+          while (sib && sib.tagName !== 'H2') {
+            if (sib.tagName === 'H3') subheadings.push(sib);
+            sib = sib.nextElementSibling;
+          }
+          if (subheadings.length >= 3) {
+            // Pick 2-3 evenly spaced sub-sections
+            var picks = [];
+            if (subheadings.length <= 4) {
+              picks = subheadings;
+            } else {
+              var step = Math.floor(subheadings.length / 3);
+              picks.push(subheadings[0]);
+              picks.push(subheadings[step]);
+              picks.push(subheadings[step * 2]);
+            }
+            picks.forEach(function(h3, idx) {
+              if (!h3.id) h3.id = ch.id + '-s' + idx;
+              var subLi = document.createElement('li');
+              subLi.style.cssText = 'padding-left:44px;font-size:0.82em;border-bottom:none;min-height:28px;';
+              var subA = document.createElement('a');
+              subA.href = '#' + h3.id;
+              var text = h3.textContent.substring(0, 35);
+              if (h3.textContent.length > 35) text += '...';
+              subA.textContent = '\u2514 ' + text;
+              subA.style.cssText = 'color:var(--text-muted);font-weight:400;';
+              subA.addEventListener('click', function() {
+                if (window.innerWidth < 900) toggleSidebar();
+              });
+              subLi.appendChild(subA);
+              chapterContainer.appendChild(subLi);
+            });
+          }
+        }
       });
 
       list.appendChild(chapterContainer);
@@ -8615,50 +8654,7 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
     window.addEventListener('scroll', checkChapterCompletion, { passive: true });
   })();
 
-  // ==================== SUB-CHAPTER NAVIGATION ====================
-  (function() {
-    // Add collapsible sub-sections within each chapter
-    document.querySelectorAll('h2[id^="ch"]').forEach(function(h2) {
-      var chId = h2.id;
-      var subheadings = [];
-      var sibling = h2.nextElementSibling;
-
-      // Collect all h3s until next h2
-      while (sibling && sibling.tagName !== 'H2') {
-        if (sibling.tagName === 'H3') {
-          subheadings.push(sibling);
-        }
-        sibling = sibling.nextElementSibling;
-      }
-
-      if (subheadings.length < 2) return; // Only add nav if 2+ sections
-
-      // Create sub-nav bar
-      var subNav = document.createElement('div');
-      subNav.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 20px;padding:10px 14px;background:var(--bg-code);border-radius:8px;border:1px solid var(--border);';
-
-      var label = document.createElement('span');
-      label.style.cssText = 'font-size:12px;font-weight:600;color:var(--text-muted);margin-right:4px;white-space:nowrap;align-self:center;';
-      label.textContent = 'In this chapter:';
-      subNav.appendChild(label);
-
-      subheadings.forEach(function(h3, idx) {
-        // Give h3 an ID if it doesn't have one
-        if (!h3.id) h3.id = chId + '-s' + (idx + 1);
-
-        var link = document.createElement('a');
-        link.href = '#' + h3.id;
-        link.textContent = h3.textContent.substring(0, 40) + (h3.textContent.length > 40 ? '...' : '');
-        link.style.cssText = 'font-size:12px;color:var(--accent);text-decoration:none;padding:3px 8px;border-radius:4px;background:var(--bg);border:1px solid var(--border);white-space:nowrap;';
-        link.addEventListener('mouseenter', function() { this.style.background = 'var(--accent-bg)'; });
-        link.addEventListener('mouseleave', function() { this.style.background = 'var(--bg)'; });
-        subNav.appendChild(link);
-      });
-
-      // Insert after the h2
-      h2.parentNode.insertBefore(subNav, h2.nextSibling);
-    });
-  })();
+  // Sub-chapter navigation is built into the sidebar (see buildSidebar)
 
   // Reading time tracker - count active reading minutes
   (function() {
