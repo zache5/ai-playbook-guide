@@ -2950,7 +2950,7 @@ This guide is for educational purposes only. Results vary based on individual ef
 <p>AI video generation is advancing rapidly. Tools like Sora (OpenAI), Runway, and Kling can generate short video clips from text prompts. AI voice tools like ElevenLabs can clone voices, generate realistic speech, and create voiceovers. These are not perfect yet, but they are improving fast and already useful for certain applications.</p>
 
 <h4>Reasoning and analysis</h4>
-<p>Modern AI models can solve complex math problems, analyze data sets, evaluate arguments, plan multi-step projects, and reason through difficult questions. Claude and GPT-4 class models can pass professional exams including the bar exam, medical licensing exams, and graduate-level tests. They can review contracts, identify patterns in data, and provide strategic analysis.</p>
+<p>Modern AI models can solve complex math problems, analyze data sets, evaluate arguments, plan multi-step projects, and reason through difficult questions. Claude and GPT-4o class models can pass professional exams including the bar exam, medical licensing exams, and graduate-level tests. They can review contracts, identify patterns in data, and provide strategic analysis.</p>
 
 <h3>What AI cannot do (honest version)</h3>
 
@@ -4326,7 +4326,7 @@ Claude connected to the outside world. It can read web pages, check your email, 
 <!-- CHAPTER 17 -->
 <h2 id="ch19">Chapter 19: Automating the Boring Stuff</h2>
 
-<p>This chapter changes everything. We are setting up tasks that run on a schedule.</p>
+<p>We are setting up tasks that run on a schedule.</p>
 
 <div class="prompt-box"><div class="prompt-label">Daily email briefing</div>/schedule "Every weekday at 8am, check my Gmail for unread messages, categorize them as urgent/action/FYI, and save a summary to ~/daily-briefing.txt"</div>
 
@@ -5423,7 +5423,7 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
 <div class="glossary-item"><div class="glossary-term">Hallucination</div><div class="glossary-def">When AI confidently states something that is wrong. It is not lying. It is generating text that sounds right based on patterns, but the patterns produced fiction. Always verify important claims.</div></div>
 <div class="glossary-item"><div class="glossary-term">LLM (Large Language Model)</div><div class="glossary-def">The general term for AI systems like Claude, ChatGPT, and Gemini. "Large" refers to the number of parameters (billions). "Language" because they process text. "Model" because they are statistical models of language.</div></div>
 <div class="glossary-item"><div class="glossary-term">MCP (Model Context Protocol)</div><div class="glossary-def">A system that lets Claude connect to external services like Gmail, Calendar, and websites. Think of MCP servers as plugins.</div></div>
-<div class="glossary-item"><div class="glossary-term">Model</div><div class="glossary-def">The AI "brain." A massive mathematical pattern trained on text data. Different models (Claude Opus, Claude Sonnet, GPT-4) have different strengths.</div></div>
+<div class="glossary-item"><div class="glossary-term">Model</div><div class="glossary-def">The AI "brain." A massive mathematical pattern trained on text data. Different models (Claude Opus, Claude Sonnet, GPT-4o) have different strengths.</div></div>
 <div class="glossary-item"><div class="glossary-term">Node.js</div><div class="glossary-def">A program that lets JavaScript code run on your computer (instead of just in a web browser). Claude Code needs it the way a car needs an engine.</div></div>
 <div class="glossary-item"><div class="glossary-term">npm</div><div class="glossary-def">Node Package Manager. A tool for installing software packages (like Claude Code). Comes bundled with Node.js.</div></div>
 <div class="glossary-item"><div class="glossary-term">Opus</div><div class="glossary-def">Claude's most powerful model. Best for complex reasoning, nuanced writing, and difficult problems. Uses more of your message allowance than Sonnet.</div></div>
@@ -5825,7 +5825,7 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
     {q:"who made claude", a:"Anthropic, a company based in San Francisco founded by former OpenAI researchers. Anthropic focuses on AI safety research alongside building Claude. The company was founded in 2021 by Dario Amodei and Daniela Amodei.", ch:"ch2"},
     {q:"what is chatgpt", a:"ChatGPT is an AI chatbot made by OpenAI. It was the first AI tool to go mainstream (November 2022) and is used by hundreds of millions of people. It is good at general conversations, image generation (DALL-E), and web browsing. Chapter 6 compares it directly with Claude.", ch:"ch6"},
     {q:"what is gemini", a:"Gemini is Google's AI model. It integrates with Gmail, Google Docs, Google Sheets, and Google Search. If you are deeply embedded in the Google ecosystem, Gemini has some unique advantages. It also has strong multimodal capabilities for processing text, images, and video.", ch:"ch1"},
-    {q:"what is openai", a:"OpenAI is the company that makes ChatGPT and GPT-4. Founded in 2015, it launched the current AI wave with ChatGPT in November 2022. OpenAI also makes DALL-E (images) and Sora (video). It is Claude's main competitor.", ch:"ch1"},
+    {q:"what is openai", a:"OpenAI is the company that makes ChatGPT, GPT-4o, and the o3 reasoning models. Founded in 2015, it launched the current AI wave with ChatGPT in November 2022. OpenAI also makes DALL-E (images) and Sora (video). It is Claude's main competitor.", ch:"ch1"},
     {q:"what is llama", a:"Llama is Meta's (Facebook's) open-source AI model. Unlike Claude or ChatGPT, anyone can download and run Llama on their own computer for free. You probably will not use it directly, but it powers many third-party AI apps and tools.", ch:"ch1"},
     {q:"what is mistral", a:"Mistral is a French AI company building competitive models. Known for efficient, multilingual models with strong European data privacy compliance. Growing fast as an alternative to US-based AI companies.", ch:"ch1"},
     {q:"is ai dangerous", a:"AI is a tool, and like any powerful tool, it can be used well or poorly. The realistic concerns are: misinformation (AI can generate convincing false content), job displacement in some roles, privacy risks from sharing sensitive data, and over-reliance on AI without verifying accuracy. The guide covers how to use AI responsibly and avoid these pitfalls.", ch:"ch1"},
@@ -6328,7 +6328,10 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
     var completed = 0;
     CHAPTERS.forEach(function(ch) { if (progress[ch.id]) completed++; });
     document.getElementById('sidebar-progress-fill').style.width = ((completed / CHAPTERS.length) * 100) + '%';
-    document.getElementById('sidebar-progress-text').textContent = completed + ' of ' + CHAPTERS.length + ' sections complete';
+    var coreTotal = CHAPTERS.filter(function(c) { return c.id.match(/^ch\d+$/); }).length;
+    var coreProg = 0;
+    CHAPTERS.filter(function(c) { return c.id.match(/^ch\d+$/); }).forEach(function(c) { if (progress[c.id]) coreProg++; });
+    document.getElementById('sidebar-progress-text').textContent = coreProg + ' of ' + coreTotal + ' chapters complete';
 
     // Check for essential path completion
     var profile = getProfile();
@@ -6346,8 +6349,11 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
       }
     }
 
-    // Check for full completion
-    if (completed === CHAPTERS.length && !localStorage.getItem('aiplaybook_completed')) {
+    // Check for full completion (only count the 26 core chapters)
+    var coreCount = CHAPTERS.filter(function(c) { return c.id.match(/^ch\d+$/); }).length;
+    var coreDone = 0;
+    CHAPTERS.filter(function(c) { return c.id.match(/^ch\d+$/); }).forEach(function(c) { if (progress[c.id]) coreDone++; });
+    if (coreDone >= coreCount && !localStorage.getItem('aiplaybook_completed')) {
       localStorage.setItem('aiplaybook_completed', 'true');
       showCompletionModal();
     }
@@ -6370,7 +6376,7 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
         '<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:14px;color:var(--text-secondary);"><strong style="color:#6d28d9;">1.</strong> Pick ONE workflow from Chapter 11 and set it up today.</div>' +
         '<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:14px;color:var(--text-secondary);"><strong style="color:#6d28d9;">2.</strong> Revisit the ROI Calculator with real numbers from your last week.</div>' +
         '<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:14px;color:var(--text-secondary);"><strong style="color:#6d28d9;">3.</strong> Join the community (newsletter + Discord) to stay current.</div>' +
-        '<div style="padding:8px 0;font-size:14px;color:var(--text-secondary);"><strong style="color:#6d28d9;">4.</strong> Share this guide with one person who would benefit from it.</div>' +
+        '<div style="padding:8px 0;font-size:14px;color:var(--text-secondary);"><strong style="color:#6d28d9;">4.</strong> Tell one person about what you learned.</div>' +
       '</div>' +
       '<p style="font-size:14px;color:var(--text-muted);margin-bottom:20px;">The tools in this guide (Prompt Builder, ROI Calculator, AI Assistant, Glossary) are always here for you. Come back anytime.</p>' +
       '<button onclick="this.closest(\'div\').parentElement.remove();" style="background:#6d28d9;color:white;border:none;padding:14px 32px;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer;">Close and Keep Building</button>';
@@ -8788,12 +8794,13 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
     function updateDiscordGate() {
       var progress = getProgress();
       var done = 0;
-      CHAPTERS.forEach(function(ch) { if (progress[ch.id]) done++; });
+      var coreChapters = CHAPTERS.filter(function(ch) { return ch.id.match(/^ch\d+$/); });
+      coreChapters.forEach(function(ch) { if (progress[ch.id]) done++; });
       var progText = document.getElementById('discord-progress-text');
       var totalText = document.getElementById('discord-total-text');
       if (progText) progText.textContent = done;
-      if (totalText) totalText.textContent = CHAPTERS.length;
-      if (done >= CHAPTERS.length) {
+      if (totalText) totalText.textContent = coreChapters.length;
+      if (done >= coreChapters.length) {
         var locked = document.getElementById('discord-locked');
         var link = document.getElementById('discord-link');
         if (locked) locked.style.display = 'none';
