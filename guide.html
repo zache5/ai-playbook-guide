@@ -6218,8 +6218,9 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
           if (subheadings.length >= 2) {
             // Add section count to chapter link
             var countSpan = document.createElement('span');
-            countSpan.style.cssText = 'font-size:0.7em;color:var(--text-muted);font-weight:500;margin-left:6px;background:var(--bg-code);padding:1px 6px;border-radius:4px;';
-            countSpan.textContent = subheadings.length + ' sections';
+            countSpan.style.cssText = 'font-size:0.7em;color:var(--text-muted);font-weight:500;white-space:nowrap;';
+            countSpan.textContent = ' \u00B7 ' + subheadings.length + ' sec';
+            a.style.cssText += 'display:inline;';
             a.appendChild(countSpan);
 
             // Create collapsible container
@@ -6257,12 +6258,6 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
 
             chapterContainer.appendChild(subsContainer);
 
-            // Add expand arrow to chapter
-            var expandArrow = document.createElement('span');
-            expandArrow.style.cssText = 'font-size:0.7em;color:var(--text-muted);margin-left:auto;padding:2px 6px;cursor:pointer;';
-            expandArrow.textContent = '\u25B6';
-            li.appendChild(expandArrow);
-
             // Click anywhere on chapter row to toggle sub-chapters
             li.style.cursor = 'pointer';
             li.addEventListener('click', function(e) {
@@ -6270,7 +6265,6 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
               e.preventDefault();
               var isOpen = subsContainer.style.display !== 'none';
               subsContainer.style.display = isOpen ? 'none' : 'block';
-              expandArrow.textContent = isOpen ? '\u25B6' : '\u25BC';
             });
           }
         }
