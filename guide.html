@@ -8525,6 +8525,141 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
     updateContinueBtn();
   }
 
+  // ==================== RESUME READING POSITION ====================
+  (function() {
+    var POS_KEY = 'aiplaybook_scroll_pos';
+    var CHAPTER_KEY = 'aiplaybook_last_chapter';
+    var saveTimer = null;
+
+    // Save scroll position periodically (every 2 seconds while scrolling)
+    window.addEventListener('scroll', function() {
+      if (saveTimer) clearTimeout(saveTimer);
+      saveTimer = setTimeout(function() {
+        localStorage.setItem(POS_KEY, window.scrollY);
+        // Also save the current chapter ID for more reliable restore
+        var allH2 = document.querySelectorAll('h2[id^="ch"]');
+        var currentCh = null;
+        allH2.forEach(function(h2) {
+          if (h2.offsetTop <= window.scrollY + 200) currentCh = h2.id;
+        });
+        if (currentCh) localStorage.setItem(CHAPTER_KEY, currentCh);
+      }, 2000);
+    }, { passive: true });
+
+    // Restore on load (only if not navigating to a hash)
+    if (!window.location.hash && localStorage.getItem(POS_KEY)) {
+      var lastCh = localStorage.getItem(CHAPTER_KEY);
+      if (lastCh) {
+        setTimeout(function() {
+          var el = document.getElementById(lastCh);
+          if (el) el.scrollIntoView({ behavior: 'auto', block: 'start' });
+        }, 300);
+      }
+    }
+  })();
+
+  // ==================== AUTO-COMPLETE CHAPTERS ON SCROLL ====================
+  (function() {
+    var completed = {};
+    var chapterEls = [];
+
+    // Build list of chapter elements and their end positions
+    CHAPTERS.forEach(function(ch) {
+      var el = document.getElementById(ch.id);
+      if (el) chapterEls.push({ id: ch.id, el: el });
+    });
+
+    function checkChapterCompletion() {
+      var scrollBottom = window.scrollY + window.innerHeight;
+      var progress = getProgress();
+      var changed = false;
+
+      for (var i = 0; i < chapterEls.length; i++) {
+        var ch = chapterEls[i];
+        if (progress[ch.id] || completed[ch.id]) continue;
+
+        // Find the end of this chapter (start of next chapter or next HR)
+        var nextEl = i + 1 < chapterEls.length ? chapterEls[i + 1].el : null;
+        var chapterEnd = nextEl ? nextEl.offsetTop : document.body.scrollHeight;
+
+        // Mark complete when user has scrolled past 85% of the chapter
+        var chapterStart = ch.el.offsetTop;
+        var chapterHeight = chapterEnd - chapterStart;
+        var threshold = chapterStart + chapterHeight * 0.85;
+
+        if (scrollBottom >= threshold) {
+          completed[ch.id] = true;
+          progress[ch.id] = true;
+          changed = true;
+          // Update checkbox in sidebar
+          var cb = document.querySelector('#sidebar-chapters input[type="checkbox"]');
+          var allCbs = document.querySelectorAll('#sidebar-chapters input[type="checkbox"]');
+          allCbs.forEach(function(box) {
+            var link = box.nextElementSibling;
+            if (link && link.getAttribute('href') === '#' + ch.id) {
+              box.checked = true;
+            }
+          });
+          // Show milestone toast if applicable
+          if (MILESTONES[ch.id]) showToast(MILESTONES[ch.id].title, MILESTONES[ch.id].msg);
+        }
+      }
+
+      if (changed) {
+        saveProgress(progress);
+        updateProgressBar();
+        buildSidebar();
+      }
+    }
+
+    window.addEventListener('scroll', checkChapterCompletion, { passive: true });
+  })();
+
+  // ==================== SUB-CHAPTER NAVIGATION ====================
+  (function() {
+    // Add collapsible sub-sections within each chapter
+    document.querySelectorAll('h2[id^="ch"]').forEach(function(h2) {
+      var chId = h2.id;
+      var subheadings = [];
+      var sibling = h2.nextElementSibling;
+
+      // Collect all h3s until next h2
+      while (sibling && sibling.tagName !== 'H2') {
+        if (sibling.tagName === 'H3') {
+          subheadings.push(sibling);
+        }
+        sibling = sibling.nextElementSibling;
+      }
+
+      if (subheadings.length < 2) return; // Only add nav if 2+ sections
+
+      // Create sub-nav bar
+      var subNav = document.createElement('div');
+      subNav.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 20px;padding:10px 14px;background:var(--bg-code);border-radius:8px;border:1px solid var(--border);';
+
+      var label = document.createElement('span');
+      label.style.cssText = 'font-size:12px;font-weight:600;color:var(--text-muted);margin-right:4px;white-space:nowrap;align-self:center;';
+      label.textContent = 'In this chapter:';
+      subNav.appendChild(label);
+
+      subheadings.forEach(function(h3, idx) {
+        // Give h3 an ID if it doesn't have one
+        if (!h3.id) h3.id = chId + '-s' + (idx + 1);
+
+        var link = document.createElement('a');
+        link.href = '#' + h3.id;
+        link.textContent = h3.textContent.substring(0, 40) + (h3.textContent.length > 40 ? '...' : '');
+        link.style.cssText = 'font-size:12px;color:var(--accent);text-decoration:none;padding:3px 8px;border-radius:4px;background:var(--bg);border:1px solid var(--border);white-space:nowrap;';
+        link.addEventListener('mouseenter', function() { this.style.background = 'var(--accent-bg)'; });
+        link.addEventListener('mouseleave', function() { this.style.background = 'var(--bg)'; });
+        subNav.appendChild(link);
+      });
+
+      // Insert after the h2
+      h2.parentNode.insertBefore(subNav, h2.nextSibling);
+    });
+  })();
+
   // Reading time tracker - count active reading minutes
   (function() {
     var READING_KEY = 'aiplaybook_reading_minutes';
