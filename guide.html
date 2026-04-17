@@ -6254,12 +6254,30 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
               var subCheck = document.createElement('span');
               subCheck.className = 'sub-check';
               subCheck.setAttribute('data-sub-id', h3.id);
-              subCheck.style.cssText = 'font-size:10px;width:14px;height:14px;border-radius:3px;border:1.5px solid var(--border);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;';
+              subCheck.style.cssText = 'font-size:10px;width:14px;height:14px;border-radius:3px;border:1.5px solid var(--border);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;';
               if (subProgress[h3.id]) {
                 subCheck.textContent = '\u2713';
                 subCheck.style.color = 'var(--green)';
                 subCheck.style.borderColor = 'var(--green)';
               }
+              (function(sc, hid) {
+                sc.addEventListener('click', function(e) {
+                  e.stopPropagation();
+                  var sp = JSON.parse(localStorage.getItem('aiplaybook_sub_progress') || '{}');
+                  if (sp[hid]) {
+                    delete sp[hid];
+                    sc.textContent = '';
+                    sc.style.color = '';
+                    sc.style.borderColor = 'var(--border)';
+                  } else {
+                    sp[hid] = true;
+                    sc.textContent = '\u2713';
+                    sc.style.color = 'var(--green)';
+                    sc.style.borderColor = 'var(--green)';
+                  }
+                  localStorage.setItem('aiplaybook_sub_progress', JSON.stringify(sp));
+                });
+              })(subCheck, h3.id);
               var subA = document.createElement('a');
               subA.href = '#' + h3.id;
               var rawText = h3.childNodes[0] ? h3.childNodes[0].textContent : h3.textContent;
@@ -8709,6 +8727,22 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
     }
 
     // Also track sub-section completion
+    var subTimeTracker = {};
+    setInterval(function() {
+      var scrollMid = window.scrollY + window.innerHeight / 2;
+      document.querySelectorAll('h3[id]').forEach(function(h3) {
+        var nextH = h3.nextElementSibling;
+        var secEnd = h3.offsetTop + 500;
+        while (nextH) {
+          if (nextH.tagName === 'H3' || nextH.tagName === 'H2') { secEnd = nextH.offsetTop; break; }
+          nextH = nextH.nextElementSibling;
+        }
+        if (scrollMid >= h3.offsetTop && scrollMid < secEnd) {
+          subTimeTracker[h3.id] = (subTimeTracker[h3.id] || 0) + 1;
+        }
+      });
+    }, 1000);
+
     function checkSubSectionCompletion() {
       var scrollBottom = window.scrollY + window.innerHeight;
       var subProgress = JSON.parse(localStorage.getItem('aiplaybook_sub_progress') || '{}');
@@ -8726,7 +8760,8 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
           }
           nextEl = nextEl.nextElementSibling;
         }
-        if (scrollBottom >= sectionEnd - 50) {
+        // Must scroll past the section AND spend at least 10 seconds reading it
+        if (scrollBottom >= sectionEnd + 100 && (subTimeTracker[h3.id] || 0) >= 10) {
           subProgress[h3.id] = true;
           changed = true;
           // Update the check in sidebar
