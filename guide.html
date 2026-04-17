@@ -6206,7 +6206,7 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
 
         chapterContainer.appendChild(li);
 
-        // Add sub-chapters for longer chapters (3+ h3 sections)
+        // Add collapsible sub-chapters
         var chEl = document.getElementById(ch.id);
         if (chEl) {
           var subheadings = [];
@@ -6215,26 +6215,26 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
             if (sib.tagName === 'H3') subheadings.push(sib);
             sib = sib.nextElementSibling;
           }
-          if (subheadings.length >= 3) {
-            // Pick 2-3 evenly spaced sub-sections
-            var picks = [];
-            if (subheadings.length <= 4) {
-              picks = subheadings;
-            } else {
-              var step = Math.floor(subheadings.length / 3);
-              picks.push(subheadings[0]);
-              picks.push(subheadings[step]);
-              picks.push(subheadings[step * 2]);
-            }
+          if (subheadings.length >= 2) {
+            // Add section count to chapter link
+            var countSpan = document.createElement('span');
+            countSpan.style.cssText = 'font-size:0.75em;color:var(--text-muted);font-weight:400;margin-left:4px;';
+            countSpan.textContent = '(' + subheadings.length + ')';
+            a.appendChild(countSpan);
+
+            // Create collapsible container
+            var subsContainer = document.createElement('div');
+            subsContainer.style.cssText = 'display:none;';
+
             var subProgress = JSON.parse(localStorage.getItem('aiplaybook_sub_progress') || '{}');
-            picks.forEach(function(h3, idx) {
+            subheadings.forEach(function(h3, idx) {
               if (!h3.id) h3.id = ch.id + '-s' + idx;
               var subLi = document.createElement('li');
-              subLi.style.cssText = 'padding-left:40px;font-size:0.82em;border-bottom:none;min-height:28px;display:flex;align-items:center;gap:6px;';
+              subLi.style.cssText = 'padding-left:40px;font-size:0.82em;border-bottom:none;min-height:26px;display:flex;align-items:center;gap:6px;';
               var subCheck = document.createElement('span');
               subCheck.className = 'sub-check';
               subCheck.setAttribute('data-sub-id', h3.id);
-              subCheck.style.cssText = 'font-size:11px;width:16px;height:16px;border-radius:3px;border:1.5px solid var(--border);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;';
+              subCheck.style.cssText = 'font-size:10px;width:14px;height:14px;border-radius:3px;border:1.5px solid var(--border);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;';
               if (subProgress[h3.id]) {
                 subCheck.textContent = '\u2713';
                 subCheck.style.color = 'var(--green)';
@@ -6242,16 +6242,27 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
               }
               var subA = document.createElement('a');
               subA.href = '#' + h3.id;
-              var text = h3.textContent.substring(0, 32);
-              if (h3.textContent.length > 32) text += '...';
+              var text = h3.textContent.substring(0, 35);
+              if (h3.textContent.length > 35) text += '...';
               subA.textContent = text;
-              subA.style.cssText = 'color:var(--text-muted);font-weight:400;text-decoration:none;';
-              subA.addEventListener('click', function() {
+              subA.style.cssText = 'color:var(--text-muted);font-weight:400;text-decoration:none;font-size:12px;';
+              subA.addEventListener('click', function(e) {
+                e.stopPropagation();
                 if (window.innerWidth < 900) toggleSidebar();
               });
               subLi.appendChild(subCheck);
               subLi.appendChild(subA);
-              chapterContainer.appendChild(subLi);
+              subsContainer.appendChild(subLi);
+            });
+
+            chapterContainer.appendChild(subsContainer);
+
+            // Click chapter to toggle sub-chapters
+            li.style.cursor = 'pointer';
+            li.addEventListener('click', function(e) {
+              if (e.target.tagName === 'INPUT' || e.target.tagName === 'A') return;
+              var isOpen = subsContainer.style.display !== 'none';
+              subsContainer.style.display = isOpen ? 'none' : 'block';
             });
           }
         }
