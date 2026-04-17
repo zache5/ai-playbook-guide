@@ -6279,11 +6279,17 @@ If Claude saves you 2 hours per month (and it will save far more), Pro pays for 
 
             chapterContainer.appendChild(subsContainer);
 
-            // Click anywhere on chapter row to toggle sub-chapters
+            // Prevent checkbox clicks from toggling sub-chapters
+            cb.addEventListener('click', function(e) {
+              e.stopPropagation();
+            });
+
+            // Click anywhere else on chapter row to toggle sub-chapters
             li.style.cursor = 'pointer';
             li.addEventListener('click', function(e) {
               if (e.target.tagName === 'INPUT') return;
               e.preventDefault();
+              e.stopPropagation();
               var isOpen = subsContainer.style.display !== 'none';
               subsContainer.style.display = isOpen ? 'none' : 'block';
             });
